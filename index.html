@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f5bff">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Bill Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#eef1f6;--surface:#fff;--ink:#14213d;--muted:#5d6b86;--line:#d9dfea;--accent:#2f5bff;--accent-ink:#fff;--ok:#1e8e5a;--warn:#b45309;--bad:#c62828;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1626;--surface:#18223a;--ink:#eef1f8;--muted:#9aa7c4;--line:#2a3654;--accent:#7b97ff;--accent-ink:#0f1626;--ok:#4cc38a;--warn:#f0a050;--bad:#ff7b7b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1626;--surface:#18223a;--ink:#eef1f8;--muted:#9aa7c4;--line:#2a3654;--accent:#7b97ff;--accent-ink:#0f1626;--ok:#4cc38a;--warn:#f0a050;--bad:#ff7b7b;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:560px;margin:0 auto;padding:20px 16px 48px}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.sync{font-size:12px;color:var(--muted)}.sync[data-s="ok"]{color:var(--ok)}.sync[data-s="warn"]{color:var(--warn)}
+.bnav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;background:var(--surface);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+.bnav button{flex:1;display:grid;justify-items:center;gap:2px;border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:600;padding:6px 2px;border-radius:10px;cursor:pointer;line-height:1.15;text-align:center}
+.bnav button[aria-selected="true"]{color:var(--accent)}
+.bnav button[aria-selected="true"] svg{stroke-width:2.6}
+.back{border:0;background:none;color:var(--accent);font:inherit;font-weight:600;padding:6px 0 12px;cursor:pointer}
+.shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.ebtn.big{padding:12px;font-size:15px;background:var(--surface)}
+.tonow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-4px 0 12px;font-size:13px;color:var(--warn)}
+.tonow .chip{color:var(--accent);border-color:var(--accent);font-weight:600;flex:none}
+.sortbar{display:flex;align-items:center;gap:8px;margin:0 0 8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;align-items:center;gap:14px;background:var(--ink);color:var(--bg);padding:10px 12px 10px 16px;border-radius:12px;max-width:calc(100% - 32px);box-shadow:0 4px 18px rgba(0,0,0,.25)}
+.toast button{border:0;background:none;color:var(--bg);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:4px 8px}
+h1{font-size:15px;font-weight:600;color:var(--muted);margin:0 0 4px}
+h2{font-size:17px;margin:0 0 8px}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;margin:10px 0 16px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;border:0;background:none;color:var(--muted);font:inherit;font-weight:600;padding:9px 14px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mnav{display:flex;align-items:center;justify-content:space-between;margin:0 0 12px}
+.mnav button{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:20px;width:44px;height:44px;border-radius:10px;cursor:pointer}
+.mnav b{font-size:18px}
+.hero{padding:4px 0 16px}
+.hero .big{font-size:clamp(44px,14vw,68px);font-weight:700;letter-spacing:-.03em;line-height:1}
+.big.neg{color:var(--bad)}
+.sub{color:var(--muted);margin-top:6px;font-size:14px}
+.bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:16px}
+table.t{width:100%;border-collapse:collapse}
+.t th{font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:4px 4px 8px;border-bottom:1px solid var(--line)}
+.t td{padding:10px 4px;border-bottom:1px solid var(--line);vertical-align:middle}
+.t tbody tr:last-child td{border-bottom:0}
+.t .r{text-align:right;font-variant-numeric:tabular-nums}
+.t td.r .a,.t td.r{font-weight:600}
+.t td.c{width:36px;padding-left:0}
+.t .nm{font-weight:600}
+.t tr.done .nm,.t tr.done .r .a{text-decoration:line-through;color:var(--muted)}
+.t tfoot td{font-weight:700;border-top:2px solid var(--ink);border-bottom:0}
+.t tr.total td{font-weight:700;font-size:18px;border-top:2px solid var(--ink);border-bottom:0}
+.a.neg{color:var(--bad)}
+.meta{font-size:13px;color:var(--muted)}
+.meta.bad{color:var(--bad)}
+.chk{width:26px;height:26px;accent-color:var(--ok)}
+.tag{font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid currentColor}
+.tag.warn{color:var(--warn)}.tag.bad{color:var(--bad)}
+.x{border:0;background:none;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:4px 8px}
+.ed{border:0;background:none;color:var(--accent);font:inherit;font-size:13px;cursor:pointer;padding:0}
+.edit{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+.edit input{width:84px;padding:6px 8px}
+.form{display:grid;gap:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{font-size:13px;color:var(--muted);display:grid;gap:4px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+.btn{border:0;background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:600;padding:12px;border-radius:10px;cursor:pointer}
+.btn.ghost{background:none;color:var(--accent);border:1px solid var(--line)}
+.rowbtns{display:flex;gap:10px}.rowbtns .btn{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14px;padding:6px 12px;border-radius:20px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.empty{color:var(--muted);padding:8px 0}
+.note{font-size:13px;color:var(--muted);margin-top:6px}
+.hidden{display:none}
+.big2{font-size:clamp(32px,10vw,46px);font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.pill{font-size:12px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--bg);border:1px solid var(--line);white-space:nowrap;color:var(--muted)}
+.pill.soon{color:var(--warn);border-color:var(--warn)}
+.steps{display:grid;gap:10px}
+.step{display:flex;gap:12px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;padding:12px;border-radius:12px;cursor:pointer}
+.step b{flex:none;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.step span{display:grid;font-weight:600}.step small{font-weight:400;color:var(--muted);font-size:13px}
+.seg{display:flex;gap:8px}
+.filebtn{display:grid;place-items:center;font-size:16px;gap:0;color:var(--accent)}
+:root{--c-home:#2f5bff;--c-bills:#c2410c;--c-inc:#15803d;--c-hist:#7e22ce}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--c-home:#7b97ff;--c-bills:#fb923c;--c-inc:#4ade80;--c-hist:#c084fc}}
+:root[data-theme="dark"]{--c-home:#7b97ff;--c-bills:#fb923c;--c-inc:#4ade80;--c-hist:#c084fc}
+body[data-s="home"]{--accent:var(--c-home)}
+body[data-s="bills"]{--accent:var(--c-bills)}
+body[data-s="income"]{--accent:var(--c-inc)}
+body[data-s="hist"]{--accent:var(--c-hist)}
+.top{border-bottom:4px solid var(--accent);padding-bottom:8px}
+.navwrap{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 16px;background:var(--bg)}
+.navtop{position:sticky;top:0;z-index:20;padding:10px 0}
+.navbot{margin:24px 0 0}
+.nbtn{display:grid;justify-items:center;align-content:center;gap:4px;min-height:68px;padding:8px 4px;border:2px solid var(--c);border-radius:16px;background:color-mix(in srgb,var(--c) 14%,var(--surface));color:var(--ink);font:inherit;font-size:13px;font-weight:700;line-height:1.15;text-align:center;cursor:pointer}
+.nbtn svg{width:28px;height:28px;color:var(--c)}
+.nbtn[aria-selected="true"]{background:var(--c);color:var(--accent-ink)}
+.nbtn[aria-selected="true"] svg{color:var(--accent-ink)}
+.nbtn:active{transform:scale(.97)}
+@media (max-width:380px){.nbtn{font-size:12px}}
+@media (prefers-reduced-motion:reduce){.nbtn:active{transform:none}}
+
+.acts{display:flex;align-items:center;justify-content:flex-end;gap:2px}
+.ebtn{border:1px solid var(--line);background:var(--bg);color:var(--accent);font:inherit;font-size:13px;font-weight:600;padding:5px 12px;border-radius:8px;cursor:pointer}
+.editrow td{background:var(--bg);border-radius:10px;padding:12px}
+.editrow .form{gap:10px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;margin-top:8px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend .dim{color:var(--muted)}
+.t td .ed{display:block;margin-left:auto}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body data-s="home">
+<main>
+<div class="top"><h1>Bill tracker</h1><button id="install" class="ebtn hidden">Install app</button></div>
+<div class="navwrap navtop" id="navTop"></div>
+<div id="mwrap"><div class="mnav" id="mnav"><button id="pm" aria-label="Previous month">‹</button><b id="mlabel"></b><button id="nm" aria-label="Next month">›</button></div>
+<div class="tonow hidden" id="tonowW"><span id="vnote"></span><button class="chip" id="tonow">Back to this month</button></div></div>
+
+<section id="s-home"><div id="homeBody"></div>
+  <div class="panel" id="quick">
+    <h2>Add a one-off</h2>
+    <div class="seg" role="group" aria-label="Type"><button class="chip" data-qk="exp" aria-pressed="true">Expense</button><button class="chip" data-qk="sav" aria-pressed="false">Saving</button></div>
+    <div class="form" style="margin-top:12px">
+      <label>What for<input id="qn" autocapitalize="words" placeholder="Car repair" maxlength="40"></label>
+      <div class="two">
+        <label>Amount (£)<input id="qa" type="number" inputmode="decimal" min="0" step="0.01" placeholder="50"></label>
+        <label>Date<input id="qd" type="date"></label>
+      </div>
+      <button class="btn" id="addq">Add expense</button>
+    </div>
+    <div id="onceList" style="margin-top:14px"></div>
+  </div>
+</section>
+
+<section id="s-due" class="hidden"><button class="back" data-go="home">‹ Back to Home</button><div id="dueBody"></div></section>
+
+<section id="s-bills" class="hidden">
+  <div class="panel" id="billTbl"></div>
+  <div class="panel">
+    <h2>Add a bill</h2>
+    <div class="form">
+      <label>Name<input id="bn" autocapitalize="words" placeholder="Electricity" maxlength="40"></label>
+      <div class="two">
+        <label>Amount (£)<input id="ba" type="number" inputmode="decimal" min="0" step="0.01" placeholder="64.50"></label>
+        <label>Due day of month<input id="bd" type="number" inputmode="numeric" min="1" max="31" placeholder="15"></label>
+      </div>
+      <button class="btn" id="addbill">Add bill</button>
+      <div class="note">A bill repeats every month from the month you add it and counts as paid once its due date has passed. Tap Edit to change a bill, either from this month onwards or for this month only, such as a variable energy bill. The × stops a bill from the month you are viewing and keeps your past months.</div>
+    </div>
+  </div>
+  <button class="btn ghost" style="width:100%;margin-bottom:16px" data-go="split">Splitting a bill with others? Go to Split Bills</button>
+</section>
+
+<section id="s-income" class="hidden">
+  <div class="panel">
+    <h2>Income</h2>
+    <div class="form">
+      <label>Income per month (£)<input id="inc" type="number" inputmode="decimal" min="0" step="0.01" placeholder="2400"></label>
+      <div class="note" style="margin:0">Enter your income once and it carries into every month. A change applies from the month you are viewing, and earlier months keep their old figure.</div>
+    </div>
+  </div>
+  <div class="panel" id="incTbl"></div>
+  <div class="panel">
+    <h2>Total savings</h2>
+    <div class="big2" id="pottot">£0.00</div><div class="sub" id="potmsg"></div><div class="bar"><i id="potbar"></i></div>
+    <div class="two" style="margin-top:14px">
+      <label>Saved so far (£)<input id="pot" type="number" inputmode="decimal" min="0" step="0.01" placeholder="1500"></label>
+      <label>Goal (£)<input id="goal" type="number" inputmode="decimal" min="0" step="0.01" placeholder="5000"></label>
+    </div>
+    <div class="note">Type what you have saved today. From then on, each monthly saving is added automatically once its day has passed. You can retype the amount at any time to match your account.</div>
+  </div>
+  <div class="panel" id="savTbl"></div>
+  <div class="panel">
+    <h2 id="savHead">Add a monthly saving</h2>
+    <div class="form">
+      <label>Name<input id="sn" autocapitalize="words" placeholder="Holiday fund" maxlength="40"></label>
+      <div class="two">
+        <label>Amount each month (£)<input id="sa" type="number" inputmode="decimal" min="0" step="0.01" placeholder="100"></label>
+        <label>Saved on day of month<input id="sd" type="number" inputmode="numeric" min="1" max="31" placeholder="1"></label>
+      </div>
+      <button class="btn" id="addsav">Add saving</button>
+    </div>
+  </div>
+</section>
+
+<section id="s-split" class="hidden">
+  <button class="back" data-go="home">‹ Back to Home</button>
+  <div class="panel">
+    <h2>Who is sharing?</h2>
+    <div class="chips" id="people"></div>
+    <label style="margin-top:12px">Which one is you? Your share goes into your bills.<select id="meSel"></select></label>
+    <div class="two" style="margin-top:12px">
+      <input id="pn" autocapitalize="words" placeholder="Add a person" maxlength="24" aria-label="Person name">
+      <button class="btn" id="addperson">Add person</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Add a shared cost</h2>
+    <div class="form">
+      <div class="two">
+        <label>What for<input id="in" autocapitalize="words" placeholder="Broadband" maxlength="40"></label>
+        <label>Amount (£)<input id="ia" type="number" inputmode="decimal" min="0" step="0.01" placeholder="35"></label>
+      </div>
+      <label>Due day of month<input id="iday" type="number" inputmode="numeric" min="1" max="31" placeholder="1"></label>
+      <label>Shared by</label>
+      <div class="chips" id="sharers"></div>
+      <button class="btn" id="additem">Add cost</button>
+    </div>
+  </div>
+  <div class="panel" id="itemlist"></div>
+  <div class="panel"><h2 id="splitTitle">Each person pays</h2><div id="totals"></div></div>
+</section>
+
+<section id="s-hist" class="hidden">
+  <div class="panel" id="histlist"></div>
+  <div class="panel">
+    <h2>Back up your data</h2>
+    <div class="form">
+      <div class="note" style="margin:0">Your data is stored only on this phone, so back it up now and then. Download a backup file and keep it somewhere safe, such as Google Drive, or copy the text instead. To restore, choose the file, or paste the text into the box and tap Restore. Restoring replaces what is in the app now. Moving from the Claude version? Paste its backup text here.</div>
+      <textarea id="bk" rows="4" aria-label="Backup text" style="font-size:13px"></textarea>
+      <div class="rowbtns"><button class="btn" id="bkdl">Download backup file</button><label class="btn ghost filebtn">Restore from file<input id="bkfile" type="file" accept=".json,application/json" hidden></label></div>
+      <div class="rowbtns"><button class="btn" id="bkmake">Show backup</button><button class="btn ghost" id="bkrest">Restore</button></div>
+    </div>
+  </div>
+</section>
+</main>
+<div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toastmsg"></span><button id="toastundo">Undo</button></div>
+
+
+<script>
+const gbp=new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'});
+const KEY='bills-app-v1';
+let S={bills:[],people:['Me'],items:[],pick:null,saves:[],over:{},incM:{},pot:null,me:null,editing:null};
+try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&typeof p==='object')S=Object.assign(S,p)}}catch(e){}
+const save=()=>{S.updatedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+function hasData(){return !!(S.bills.length||S.saves.length||S.items.length||S.once.length||Object.keys(S.incM).length||S.pot.start||S.pot.goal)}
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const p2=n=>String(n).padStart(2,'0');
+const mk=d=>d.getFullYear()+'-'+p2(d.getMonth()+1);
+const iso=d=>mk(d)+'-'+p2(d.getDate());
+const NOW=mk(new Date());let VIEW=NOW;
+function norm(){
+  S.bills=S.bills||[];S.people=(S.people&&S.people.length)?S.people:['Me'];S.items=S.items||[];S.saves=S.saves||[];
+  S.over=S.over||{};S.incM=S.incM||{};S.once=S.once||[];S.sort=S.sort||'day';
+  S.pot=S.pot||{start:0,goal:0};
+  if(!S.pot.sinceDate)S.pot.sinceDate=iso(new Date());
+  if(!S.pot.sinceAt)S.pot.sinceAt=Date.now();
+  S.bills.forEach(b=>{if(!b.from)b.from=NOW});S.items.forEach(i=>{if(!i.from)i.from=NOW});
+  S.saves.forEach(s=>{if(!s.from)s.from=NOW;if(!s.day)s.day=1});
+  if(!S.updatedAt)S.updatedAt=hasData()?Date.now():0;
+  delete S.paid;S.editing=null;
+}
+norm();
+
+const shift=(m,n)=>{const [y,mo]=m.split('-').map(Number);return mk(new Date(y,mo-1+n,1))};
+const mname=m=>{const [y,mo]=m.split('-').map(Number);return new Date(y,mo-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'})};
+const mshort=m=>{const [y,mo]=m.split('-').map(Number);return new Date(y,mo-1,1).toLocaleDateString('en-GB',{month:'short'})};
+const active=(b,m)=>b.from<=m&&(!b.end||m<b.end);
+const amtOf=(b,m)=>(S.over[m]&&S.over[m][b.id]!==undefined)?S.over[m][b.id]:b.amount;
+const dayDate=(m,day)=>{const [y,mo]=m.split('-').map(Number);return new Date(y,mo-1,Math.min(day||1,new Date(y,mo,0).getDate()))};
+const today=()=>{const t=new Date();t.setHours(0,0,0,0);return t};
+/* a bill or saving counts as paid once its due date has passed */
+const isPaid=(b,m)=>m<NOW?true:m>NOW?false:dayDate(m,b.day)<today();
+const carry=(map,m)=>{let best=null;Object.keys(map).sort().forEach(k=>{if(k<=m)best=k});return best?map[best]:0};
+const savTotal=m=>S.saves.filter(s=>active(s,m)).reduce((t,s)=>t+amtOf(s,m),0);
+const meName=()=>S.people.includes(S.me)?S.me:S.people[0];
+function sharedBills(m){const me=meName();return S.items.filter(i=>active(i,m)).map(i=>{const by=i.by.filter(p=>S.people.includes(p));return by.includes(me)?{id:'s_'+i.id,name:i.name,share:by.length,amount:i.amount/by.length,day:i.day||1,from:i.from,end:i.end,shared:1}:null}).filter(Boolean)}
+const billsOf=m=>S.bills.filter(b=>active(b,m)).concat(sharedBills(m));
+const ord=n=>{const v=n%100;if(v>=11&&v<=13)return'th';return({1:'st',2:'nd',3:'rd'})[n%10]||'th'};
+const fmtD=d=>d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+const dtext=n=>n===0?'Due today':n===1?'Due tomorrow':`Due in ${n} days`;
+const onceOf=(k,m)=>S.once.filter(o=>o.kind===k&&o.date.slice(0,7)===m);
+const onceDate=o=>dayDate(o.date.slice(0,7),parseInt(o.date.slice(8),10));
+const oncePaid=o=>o.date.slice(0,7)<NOW?true:onceDate(o)<today();
+function savedSince(){
+  const sd=S.pot.sinceDate,t=today();let tot=0;
+  for(let k=sd.slice(0,7);k<=NOW;k=shift(k,1))S.saves.filter(s=>active(s,k)).forEach(s=>{
+    const d=dayDate(k,s.day),di=iso(d);
+    if(di>sd&&d<t&&(!s.added||di>=s.added))tot+=amtOf(s,k);
+  });
+  S.once.filter(o=>o.kind==='sav').forEach(o=>{if(onceDate(o)<=today()&&(o.at>S.pot.sinceAt||o.date>sd))tot+=o.amount});
+  return tot;
+}
+function calc(m){
+  const bl=billsOf(m),oe=onceOf('exp',m),os=onceOf('sav',m),sum=a=>a.reduce((s,o)=>s+o.amount,0);
+  const bTot=bl.reduce((s,b)=>s+amtOf(b,m),0)+sum(oe),bPaid=bl.filter(b=>isPaid(b,m)).reduce((s,b)=>s+amtOf(b,m),0)+sum(oe.filter(oncePaid));
+  const sv=S.saves.filter(s=>active(s,m)),sTot=sv.reduce((t,s)=>t+amtOf(s,m),0)+sum(os),sPaid=sv.filter(s=>isPaid(s,m)).reduce((t,s)=>t+amtOf(s,m),0)+sum(os.filter(oncePaid)),inc=carry(S.incM,m);
+  return{bl,bTot,bPaid,sTot,sPaid,inc,free:inc-sTot-bTot};
+}
+function potInfo(){
+  const tot=S.pot.start+savedSince(),g=S.pot.goal||0,mo=savTotal(NOW);let msg='Set a goal to see your progress.';
+  if(g>0){const left=g-tot;msg=Math.max(0,Math.round(tot/g*100))+'% of '+gbp.format(g)+'. '+(left<=0?'Goal reached.':gbp.format(left)+' to go'+(mo>0?`, about ${Math.ceil(left/mo)} months at ${gbp.format(mo)} a month.`:'.'))}
+  return{tot,msg,pct:g>0?Math.min(100,Math.max(0,Math.round(tot/g*100))):0};
+}
+function dueList(){
+  const out=[],t=today();
+  [NOW,shift(NOW,1),shift(NOW,2)].forEach(m=>billsOf(m).forEach(b=>{
+    const d=dayDate(m,b.day),days=Math.round((d-t)/864e5);
+    if(days<0||days>60)return;
+    out.push({name:b.name,amt:amtOf(b,m),d,days});
+  }));
+  S.once.filter(o=>o.kind==='exp').forEach(o=>{const d=onceDate(o),days=Math.round((d-t)/864e5);if(days>=0&&days<=60)out.push({name:o.name+' (one-off)',amt:o.amount,d,days})});
+  return out.sort((a,b)=>a.d-b.d);
+}
+const dueRow=d=>`<tr><td><div class="nm">${esc(d.name)}</div><div class="meta">${fmtD(d.d)}</div></td><td class="r"><span class="pill ${d.days<=3?'soon':''}">${dtext(d.days)}</span></td><td class="r">${gbp.format(d.amt)}</td></tr>`;
+
+/* ---------- screens ---------- */
+function renderHome(){
+  const c=calc(VIEW),due=dueList(),p=potInfo();
+  if(!S.bills.length&&!S.items.length&&!c.inc&&!S.saves.length){
+    $('homeBody').innerHTML=`<div class="panel"><h2>Welcome. Set up in three steps</h2><div class="steps">
+      <button class="step" data-go="income"><b>1</b><span>Add your monthly income<small>Takes a few seconds</small></span></button>
+      <button class="step" data-go="bills"><b>2</b><span>Add your bills<small>Enter each one once and it repeats every month</small></span></button>
+      <button class="step" data-go="income" data-sv="1"><b>3</b><span>Add your savings<small>Optional, and you can set a goal</small></span></button></div></div>`;
+    return;
+  }
+  const row=(n,a,cls)=>`<tr class="${cls||''}"><td>${n}</td><td class="r"><span class="a ${cls==='total'&&a<0?'neg':''}">${gbp.format(a)}</span></td></tr>`;
+  let h=`<div class="hero"><div class="big ${c.free<0?'neg':''}">${gbp.format(c.free)}</div><div class="sub">left to spend in ${mname(VIEW)}, after bills and savings</div><div class="bar"><i style="width:${c.bTot?Math.round(c.bPaid/c.bTot*100):0}%"></i></div><div class="sub">${gbp.format(c.bPaid)} of ${gbp.format(c.bTot)} in bills paid so far</div></div>`;
+  if(!c.inc)h+=`<div class="panel"><div class="note" style="margin:0 0 10px">Add your monthly income to see what is left to spend.</div><button class="btn" data-go="income">Add income</button></div>`;
+  h+=`<div class="shortcuts"><button class="ebtn big" data-go="due">Due dates</button><button class="ebtn big" data-go="split">Split bills</button></div>`;
+  h+=`<div class="panel"><h2>Coming up</h2>`+(due.length?`<table class="t"><tbody>${due.slice(0,4).map(dueRow).join('')}</tbody></table>`:'<div class="empty">Nothing due in the next 60 days.</div>')+`<button class="btn ghost" style="margin-top:10px;width:100%" data-go="due">See all due dates</button></div>`;
+  h+=`<div class="panel"><h2>${mname(VIEW)}</h2><table class="t"><tbody>${row('Income',c.inc)}${row('Savings',-c.sTot)}${row('Bills',-c.bTot)}${row('Left to spend',c.free,'total')}</tbody></table></div>`;
+  h+=`<div class="panel"><h2>Total savings</h2><div class="big2">${gbp.format(p.tot)}</div><div class="sub">${p.msg}</div><div class="bar"><i style="width:${p.pct}%"></i></div><button class="btn ghost" style="margin-top:12px;width:100%" data-go="income" data-sv="1">Manage savings</button></div>`;
+  $('homeBody').innerHTML=h;
+}
+function renderDue(){
+  const due=dueList(),wk=due.filter(d=>d.days<=7);
+  const g=[['Today',due.filter(d=>d.days===0)],['Next 7 days',due.filter(d=>d.days>=1&&d.days<=7)],['Later',due.filter(d=>d.days>7)]];
+  let h=`<div class="hero"><div class="big">${gbp.format(wk.reduce((s,d)=>s+d.amt,0))}</div><div class="sub">due in the next 7 days, across ${wk.length} bill${wk.length===1?'':'s'}</div></div>`;
+  if(!due.length)h+='<div class="panel"><div class="empty">Nothing due in the next 60 days. Add bills on the Bills screen.</div></div>';
+  g.forEach(([n,a])=>{if(a.length)h+=`<div class="panel"><h2>${n}</h2><table class="t"><tbody>${a.map(dueRow).join('')}</tbody></table></div>`});
+  h+='<div class="note">Bills count as paid once their due date has passed.</div>';
+  $('dueBody').innerHTML=h;
+}
+const btns=(id,del)=>`<div class="acts"><button class="ebtn" data-edit="${id}">Edit</button><button class="x" ${del} aria-label="Remove">×</button></div>`;
+function editRow(b,cols,shared){
+  return `<tr class="editrow"><td colspan="${cols}"><div class="form">
+    ${shared?`<div class="note" style="margin:0">Your share of ${esc(b.name)}. To change the split itself, go to Split Bills.</div>`:`<label>Name<input id="ef-n" autocapitalize="words" value="${esc(b.name)}" maxlength="40"></label>`}
+    <div class="two"><label>Amount (£)<input id="ef-a" type="number" inputmode="decimal" min="0" step="0.01" value="${Math.round(amtOf(b,VIEW)*100)/100}"></label>
+    ${shared?'':`<label>Day of month<input id="ef-d" type="number" inputmode="numeric" min="1" max="31" value="${b.day}"></label>`}</div>
+    ${shared?'':`<button class="btn" data-esave="${b.id}" data-mode="all">Save from ${mname(VIEW)} onwards</button>`}
+    <button class="btn ${shared?'':'ghost'}" data-esave="${b.id}" data-mode="one">Save for ${mname(VIEW)} only</button>
+    <button class="btn ghost" data-ecancel="1">Cancel</button>
+    ${shared?'':`<div class="note" style="margin:0">"Onwards" updates the name, amount and day for this month and every month after, and keeps earlier months as they were. "This month only" changes just the amount.</div>`}
+  </div></td></tr>`;
+}
+const nextPay=b=>{const t=today();for(const k of [NOW,shift(NOW,1),shift(NOW,2)]){if(active(b,k)){const d=dayDate(k,b.day);if(d>=t)return d}}return null};
+const nextTxt=b=>{const d=nextPay(b);return d?'Next payment: '+fmtD(d):''};
+function renderBillsTbl(){
+  const by=S.sort==='amt'?(a,b)=>amtOf(b,VIEW)-amtOf(a,VIEW):(a,b)=>a.day-b.day;
+  const bl=billsOf(VIEW).sort(by),tot=bl.reduce((s,b)=>s+amtOf(b,VIEW),0);
+  $('billTbl').innerHTML=`<h2>Your bills</h2><div class="note" style="margin:0 0 8px">Showing ${mname(VIEW)}. Use the arrows at the top to look at another month.</div>`+(bl.length?`<div class="sortbar"><span class="meta">Sort by</span><button class="chip" data-sort="day" aria-pressed="${S.sort!=='amt'}">Date</button><button class="chip" data-sort="amt" aria-pressed="${S.sort==='amt'}">Amount</button></div><table class="t"><thead><tr><th>Bill</th><th>Due</th><th class="r">Amount</th><th></th></tr></thead><tbody>${bl.map(b=>`<tr><td><div class="nm">${esc(b.name)}</div><div class="meta">${b.shared?`Your share, split ${b.share} ways. `:''}${nextTxt(b)}</div></td><td>${b.day}${ord(b.day)}</td><td class="r"><div class="a">${gbp.format(amtOf(b,VIEW))}</div></td><td class="r">${btns(b.id,`data-delbill="${b.id}"`)}</td></tr>${S.editing===b.id?editRow(b,4,b.shared):''}`).join('')}</tbody><tfoot><tr><td colspan="2">Total</td><td class="r">${gbp.format(tot)}</td><td></td></tr></tfoot></table>`:'<div class="empty">No bills yet. Add your first one below.</div>');
+}
+let QK='exp';
+function renderOnce(){
+  const l=S.once.filter(o=>o.date.slice(0,7)===VIEW).sort((a,b)=>a.date<b.date?-1:1);
+  $('onceList').innerHTML=`<div class="meta" style="margin-bottom:4px">One-offs in ${mname(VIEW)}</div>`+(l.length?`<table class="t"><tbody>${l.map(o=>`<tr><td><div class="nm">${esc(o.name)}</div><div class="meta">${o.kind==='sav'?'Saving':'Expense'}, ${fmtD(onceDate(o))}</div></td><td class="r">${o.kind==='sav'?'+':'−'}${gbp.format(o.amount)}</td><td class="r"><button class="x" data-delonce="${o.id}" aria-label="Delete ${esc(o.name)}">×</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">None this month.</div>');
+  document.querySelectorAll('[data-qk]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.qk===QK));
+  $('addq').textContent=QK==='sav'?'Add saving':'Add expense';
+  $('qn').placeholder=QK==='sav'?'Birthday money':'Car repair';
+}
+function setDates(){
+  const def=VIEW===NOW?iso(new Date()):VIEW+'-01',el=$('qd');
+  if(!el.value||el.value.slice(0,7)!==VIEW)el.value=def;
+}
+function renderIncome(){
+  const ks=Object.keys(S.incM).sort().reverse();
+  $('incTbl').innerHTML='<h2>Income history</h2>'+(ks.length?`<table class="t"><thead><tr><th>From</th><th class="r">Per month</th></tr></thead><tbody>${ks.map(k=>`<tr><td>${mname(k)}</td><td class="r">${gbp.format(S.incM[k])}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No income entered yet.</div>');
+  if(document.activeElement!==$('inc'))$('inc').value=carry(S.incM,VIEW)||'';
+}
+function renderSavings(){
+  const sv=S.saves.filter(s=>active(s,VIEW)),p=potInfo(),tot=savTotal(VIEW);
+  $('pottot').textContent=gbp.format(p.tot);$('potmsg').textContent=p.msg;$('potbar').style.width=p.pct+'%';
+  if(document.activeElement!==$('pot'))$('pot').value=p.tot?Math.round(p.tot*100)/100:'';
+  if(document.activeElement!==$('goal'))$('goal').value=S.pot.goal||'';
+  $('savTbl').innerHTML='<h2>Monthly savings</h2>'+(sv.length?`<table class="t"><thead><tr><th>Saving</th><th>Day</th><th class="r">Amount</th><th></th></tr></thead><tbody>${sv.map(s=>`<tr><td><div class="nm">${esc(s.name)}</div><div class="meta">${nextTxt(s)}</div></td><td>${s.day}${ord(s.day)}</td><td class="r"><div class="a">${gbp.format(amtOf(s,VIEW))}</div></td><td class="r">${btns(s.id,`data-delsav="${s.id}"`)}</td></tr>${S.editing===s.id?editRow(s,4,false):''}`).join('')}</tbody><tfoot><tr><td colspan="2">Total</td><td class="r">${gbp.format(tot)}</td><td></td></tr></tfoot></table>`:'<div class="empty">No savings yet. Add one below and it will repeat every month.</div>');
+}
+function renderSplit(){
+  if(!S.pick)S.pick=S.people.slice();
+  S.pick=S.pick.filter(p=>S.people.includes(p));
+  const cur=S.items.filter(i=>active(i,VIEW));
+  $('splitTitle').textContent='Each person pays in '+mname(VIEW);
+  $('meSel').innerHTML=S.people.map(p=>`<option ${p===meName()?'selected':''}>${esc(p)}</option>`).join('');
+  $('people').innerHTML=S.people.map(p=>`<span class="chip">${esc(p)}${S.people.length>1?` <button class="x" style="padding:0 0 0 6px;font-size:16px" data-delperson="${esc(p)}" aria-label="Remove ${esc(p)}">×</button>`:''}</span>`).join('');
+  $('sharers').innerHTML=S.people.map(p=>`<button class="chip" data-pick="${esc(p)}" aria-pressed="${S.pick.includes(p)}">${esc(p)}</button>`).join('');
+  $('itemlist').innerHTML=cur.length?`<table class="t"><tbody>${cur.map(i=>`<tr><td><div class="nm">${esc(i.name)}</div><div class="meta">${i.by.length===S.people.length?'Everyone':esc(i.by.join(', '))}, due on the ${i.day||1}${ord(i.day||1)}</div></td><td class="r">${gbp.format(i.amount)}</td><td class="r"><button class="x" data-delitem="${i.id}" aria-label="Stop ${esc(i.name)} from this month">×</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">No shared costs yet. Add one above.</div>';
+  const tot={};S.people.forEach(p=>tot[p]=0);
+  cur.forEach(i=>{const by=i.by.filter(p=>p in tot);by.forEach(p=>tot[p]+=i.amount/by.length)});
+  $('totals').innerHTML=`<table class="t"><tbody>${S.people.map(p=>`<tr><td class="nm">${esc(p)}</td><td class="r">${gbp.format(tot[p])}</td></tr>`).join('')}</tbody></table>`;
+}
+function renderChart(ms,futureFrom){
+  const W=600,H=260,L=54,R=14,T=14,B=30;
+  const sp=ms.map(m=>calc(m).bTot),sv=ms.map(m=>calc(m).sTot);
+  const mx=Math.max(1,...sp,...sv),step=Math.pow(10,Math.floor(Math.log10(mx)))/2;
+  const top=Math.ceil(mx/step)*step||1;
+  const X=i=>L+(ms.length===1?(W-L-R)/2:i*(W-L-R)/(ms.length-1)),Y=v=>T+(H-T-B)*(1-v/top);
+  let g='';
+  for(let i=0;i<=4;i++){const v=top*i/4,y=Y(v);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-8}" y="${y+4}" text-anchor="end" font-size="11" fill="var(--muted)">£${Math.round(v).toLocaleString('en-GB')}</text>`}
+  const every=ms.length>9?2:1;
+  ms.forEach((m,i)=>{if(i%every===0||i===ms.length-1){const jan=m.endsWith('-01')||i===0;g+=`<text x="${X(i)}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--muted)">${mshort(m)}${jan?' '+m.slice(2,4):''}</text>`}});
+  const nowI=ms.indexOf(NOW);
+  const line=(vals,col)=>{
+    const pts=vals.map((v,i)=>[X(i),Y(v)]);let s='';
+    const solid=pts.slice(0,nowI+1),dash=pts.slice(nowI);
+    if(solid.length>1)s+=`<polyline fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" points="${solid.map(p=>p.join(',')).join(' ')}"/>`;
+    if(dash.length>1)s+=`<polyline fill="none" stroke="${col}" stroke-width="2.5" stroke-dasharray="5 5" opacity=".6" points="${dash.map(p=>p.join(',')).join(' ')}"/>`;
+    s+=pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${i===nowI?5:3.5}" fill="${i>nowI?'var(--surface)':col}" stroke="${col}" stroke-width="2"/>`).join('');
+    return s;
+  };
+  const nx=X(nowI);
+  g+=`<line x1="${nx}" x2="${nx}" y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-dasharray="2 4"/>`;
+  g+=line(sp,'var(--accent)')+line(sv,'var(--ok)');
+  const desc=ms.map((m,i)=>`${mshort(m)}: spending ${gbp.format(sp[i])}, savings ${gbp.format(sv[i])}`).join('; ');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Monthly spending and savings. ${esc(desc)}">${g}</svg>
+  <div class="legend"><span><i style="background:var(--accent)"></i>Spending (bills)</span><span><i style="background:var(--ok)"></i>Savings</span><span class="dim">Dashed line and hollow dots: forecast</span></div>`;
+}
+function renderHist(){
+  if(!S.bills.length&&!S.items.length&&!S.saves.length){$('histlist').innerHTML='<h2>History</h2><div class="empty">Add bills and savings to see your month-by-month history.</div>';return}
+  const first=S.bills.map(b=>b.from).concat(S.saves.map(s=>s.from),S.items.map(i=>i.from),Object.keys(S.incM)).sort()[0];
+  const start=first>shift(NOW,-11)?first:shift(NOW,-11),all=[];
+  for(let k=first;k<=NOW;k=shift(k,1))all.push(k);
+  const ms=[];for(let k=start;k<=shift(NOW,3);k=shift(k,1))ms.push(k);
+  $('histlist').innerHTML='<h2>Spending and savings</h2>'+renderChart(ms)+'<h2 style="margin-top:20px">Month by month</h2><table class="t"><thead><tr><th>Month</th><th class="r">Bills</th><th class="r">Saved</th><th class="r">Left</th></tr></thead><tbody>'+all.slice().reverse().map(k=>{
+    const c=calc(k);
+    return `<tr><td>${mname(k)}</td><td class="r">${gbp.format(c.bTot)}</td><td class="r">${gbp.format(c.sTot)}</td><td class="r"><span class="a ${c.free<0?'neg':''}">${c.inc?gbp.format(c.free):'–'}</span></td></tr>`}).join('')+'</tbody></table><div class="note">Left is what remained after bills and savings, shown when income was set.</div>';
+}
+function renderAll(){
+  $('mlabel').textContent=mname(VIEW);
+  $('tonowW').classList.toggle('hidden',VIEW===NOW);
+  $('vnote').textContent=VIEW<NOW?'You are looking at a past month.':VIEW>NOW?'You are looking at a future month.':'';
+  const from=VIEW===NOW?'':' from '+mname(VIEW);
+  $('addbill').textContent='Add bill'+from;$('addsav').textContent='Add saving'+from;$('additem').textContent='Add cost'+from;
+  renderOnce();setDates();
+  renderHome();renderDue();renderBillsTbl();renderIncome();renderSavings();renderSplit();renderHist();
+}
+
+/* ---------- navigation ---------- */
+const SCR=['home','due','bills','split','income','hist'];
+const IC=(p)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const TABS=[['home','Home','--c-home',IC('<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>')],
+ ['bills','Bills','--c-bills',IC('<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>')],
+ ['income','Income &amp; Savings','--c-inc',IC('<path d="M16 8a4 4 0 0 0-8 0v3H6M8 11h6M8 11v6M6 17h11"/>')],
+ ['hist','History','--c-hist',IC('<path d="M4 20V4"/><path d="M4 20h16"/><path d="M7 15l4-4 3 3 5-6"/>')]];
+const navHtml=()=>TABS.map(t=>`<button class="nbtn" style="--c:var(${t[2]})" data-go="${t[0]}" data-tab="${t[0]}" aria-selected="false">${t[3]}<span>${t[1]}</span></button>`).join('');
+$('navTop').innerHTML=navHtml();
+const TABOF={due:'home',split:'home'};
+function show(s,focus){
+  SCR.forEach(k=>$('s-'+k).classList.toggle('hidden',k!==s));
+  const tab=TABOF[s]||s;
+  document.body.dataset.s=tab;
+  document.querySelectorAll('.nbtn').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab));
+  $('mwrap').classList.toggle('hidden',s==='due'||s==='hist');
+  S.editing=null;renderAll();window.scrollTo(0,0);
+  if(focus){const el=$(focus);if(el)el.scrollIntoView({block:'start'})}
+}
+let UT=null;
+function toast(msg,undo,label){
+  const t=$('toast');$('toastmsg').textContent=msg;$('toastundo').textContent=label||'Undo';t.classList.remove('hidden');
+  $('toastundo').onclick=()=>{clearTimeout(UT);t.classList.add('hidden');undo()};
+  clearTimeout(UT);UT=setTimeout(()=>t.classList.add('hidden'),7000);
+}
+function removing(label,fn){
+  const snap=JSON.stringify(S);fn();save();renderAll();
+  toast(label+' removed',()=>{S=JSON.parse(snap);norm();S.pick=null;save();renderAll()});
+}
+function go(n){VIEW=shift(VIEW,n);S.editing=null;renderAll()}
+$('pm').onclick=()=>go(-1);$('nm').onclick=()=>go(1);
+$('tonow').onclick=()=>{VIEW=NOW;S.editing=null;renderAll()};
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,input');if(!t)return;const d=t.dataset;
+  if(d.go)show(d.go,d.sv?'savHead':null);
+  else if(d.delbill){const sh=d.delbill.startsWith('s_'),arr=sh?S.items:S.bills,b=arr.find(x=>x.id===(sh?d.delbill.slice(2):d.delbill));
+    if(b)removing(b.name,()=>{if(b.from>=VIEW){const k=arr.filter(x=>x!==b);if(sh)S.items=k;else S.bills=k}else b.end=VIEW})}
+  else if(d.delsav){const s=S.saves.find(x=>x.id===d.delsav);
+    if(s)removing(s.name,()=>{if(s.from>=VIEW)S.saves=S.saves.filter(x=>x!==s);else s.end=VIEW})}
+  else if(d.sort){S.sort=d.sort;save();renderAll()}
+  else if(d.qk){QK=d.qk;renderOnce()}
+  else if(d.delonce){const o=S.once.find(x=>x.id===d.delonce);if(o)removing(o.name,()=>{S.once=S.once.filter(x=>x!==o)})}
+  else if(d.edit){S.editing=d.edit;renderAll();const i=$('ef-a');if(i){i.focus();i.select()}}
+  else if(d.ecancel){S.editing=null;renderAll()}
+  else if(d.esave){
+    const id=d.esave,sh=id.startsWith('s_'),item=sh?null:(S.bills.concat(S.saves)).find(x=>x.id===id);
+    const a=parseFloat($('ef-a').value);if(!(a>=0)){$('ef-a').focus();return}
+    if(d.mode==='one'||sh){(S.over[VIEW]=S.over[VIEW]||{})[id]=a}
+    else if(item){
+      const nm=cap($('ef-n').value.trim()),dy=parseInt($('ef-d').value,10);
+      if(!nm){$('ef-n').focus();return}if(!(dy>=1&&dy<=31)){$('ef-d').focus();return}
+      if(item.from>=VIEW){item.name=nm;item.amount=a;item.day=dy;if(S.over[VIEW])delete S.over[VIEW][id]}
+      else{const arr=S.saves.includes(item)?S.saves:S.bills;item.end=VIEW;arr.push({id:uid(),name:nm,amount:a,day:dy,from:VIEW})}
+    }
+    S.editing=null;save();renderAll();
+  }
+  else if(d.delperson){removing(d.delperson,()=>{S.people=S.people.filter(p=>p!==d.delperson);S.items.forEach(i=>i.by=i.by.filter(p=>p!==d.delperson));S.items=S.items.filter(i=>i.by.length)})}
+  else if(d.delitem){const b=S.items.find(i=>i.id===d.delitem);if(b)removing(b.name,()=>{if(b.from>=VIEW)S.items=S.items.filter(i=>i!==b);else b.end=VIEW})}
+  else if(d.pick){S.pick=S.pick.includes(d.pick)?S.pick.filter(p=>p!==d.pick):S.pick.concat(d.pick);renderSplit()}
+});
+
+/* ---------- forms ---------- */
+const dayVal=id=>Math.min(31,Math.max(1,parseInt($(id).value,10)||1));
+$('addbill').onclick=()=>{
+  const name=cap($('bn').value.trim()),amount=parseFloat($('ba').value),day=parseInt($('bd').value,10);
+  if(!name){$('bn').focus();return}if(!(amount>=0)){$('ba').focus();return}if(!(day>=1&&day<=31)){$('bd').focus();return}
+  S.bills.push({id:uid(),name,amount,day,from:VIEW});save();['bn','ba','bd'].forEach(i=>$(i).value='');renderAll();toast(name+' added',()=>show('home'),'Go to Home');
+};
+$('addsav').onclick=()=>{
+  const name=cap($('sn').value.trim()),amount=parseFloat($('sa').value);
+  if(!name){$('sn').focus();return}if(!(amount>=0)){$('sa').focus();return}
+  S.saves.push({id:uid(),name,amount,day:dayVal('sd'),from:VIEW,added:iso(new Date())});save();['sn','sa','sd'].forEach(i=>$(i).value='');renderAll();toast(name+' added',()=>show('home'),'Go to Home');
+};
+function addOnce(kind,n,a,d){
+  const name=cap($(n).value.trim()),amount=parseFloat($(a).value),date=$(d).value;
+  if(!name){$(n).focus();return}if(!(amount>=0)){$(a).focus();return}if(!date){$(d).focus();return}
+  S.once.push({id:uid(),kind,name,amount,date,at:Date.now()});save();$(n).value='';$(a).value='';
+  VIEW=date.slice(0,7);renderAll();
+}
+$('addq').onclick=()=>addOnce(QK,'qn','qa','qd');
+$('inc').oninput=()=>{S.incM[VIEW]=parseFloat($('inc').value)||0;save();renderAll()};
+$('pot').oninput=()=>{S.pot.start=parseFloat($('pot').value)||0;S.pot.sinceDate=iso(new Date());S.pot.sinceAt=Date.now();save();renderAll()};
+$('goal').oninput=()=>{S.pot.goal=parseFloat($('goal').value)||0;save();renderAll()};
+$('meSel').onchange=()=>{S.me=$('meSel').value;save();renderAll()};
+$('addperson').onclick=()=>{
+  const n=cap($('pn').value.trim());if(!n||S.people.some(p=>p.toLowerCase()===n.toLowerCase()))return;
+  S.people.push(n);S.pick.push(n);$('pn').value='';save();renderAll();
+};
+$('additem').onclick=()=>{
+  const name=cap($('in').value.trim()),amount=parseFloat($('ia').value);
+  if(!name){$('in').focus();return}if(!(amount>=0)){$('ia').focus();return}if(!S.pick.length)return;
+  S.items.push({id:uid(),name,amount,by:S.pick.slice(),day:dayVal('iday'),from:VIEW});save();
+  $('in').value='';$('ia').value='';$('iday').value='';renderAll();toast(name+' added',()=>show('home'),'Go to Home');
+};
+$('bkmake').onclick=()=>{const t=$('bk');t.value=JSON.stringify(S);t.focus();t.select();try{document.execCommand('copy')}catch(e){}};
+$('bkrest').onclick=()=>{
+  try{const p=JSON.parse($('bk').value);if(!p||!Array.isArray(p.bills))throw 0;S=Object.assign({pick:null,me:null},p);norm();save();renderAll()}
+  catch(e){$('bk').value='';$('bk').placeholder='That text is not a valid backup. Paste the full text you copied.'}
+};
+show('home');
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+let DEF=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEF=e;$('install').classList.remove('hidden')});
+window.addEventListener('appinstalled',()=>{$('install').classList.add('hidden');DEF=null});
+$('install').onclick=async()=>{if(!DEF)return;DEF.prompt();try{await DEF.userChoice}catch(e){}DEF=null;$('install').classList.add('hidden')};
+$('bkdl').onclick=()=>{const b=new Blob([JSON.stringify(S)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='bill-tracker-backup-'+iso(new Date())+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000)};
+$('bkfile').onchange=async()=>{
+  const f=$('bkfile').files[0];if(!f)return;
+  try{const p=JSON.parse(await f.text());if(!p||!Array.isArray(p.bills))throw 0;const snap=JSON.stringify(S);S=Object.assign({pick:null,me:null},p);norm();save();renderAll();toast('Backup restored',()=>{S=JSON.parse(snap);norm();save();renderAll()})}
+  catch(e){toast('That file is not a valid backup',()=>{},'OK')}
+  $('bkfile').value='';
+};
+</script>
+</body>
+</html>
