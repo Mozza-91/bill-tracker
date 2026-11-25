@@ -1,6 +1,6 @@
 /* Bill Tracker service worker: keeps the app working offline.
    Change VERSION whenever you publish a new index.html so phones pick it up. */
-const VERSION = 'v2';
+const VERSION = 'v12';
 const CACHE = 'penny-pilot-' + VERSION;
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'maskable-192.png', 'maskable-512.png'];
 

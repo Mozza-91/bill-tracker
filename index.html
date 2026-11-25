@@ -97,23 +97,33 @@ input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:
 .top{align-items:center}
 .seg{display:flex;gap:8px}
 .filebtn{display:grid;place-items:center;font-size:16px;gap:0;color:var(--accent)}
-:root{--c-home:#2f5bff;--c-bills:#c2410c;--c-inc:#15803d;--c-hist:#7e22ce}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--c-home:#7b97ff;--c-bills:#fb923c;--c-inc:#4ade80;--c-hist:#c084fc}}
-:root[data-theme="dark"]{--c-home:#7b97ff;--c-bills:#fb923c;--c-inc:#4ade80;--c-hist:#c084fc}
+:root{--c-home:#2f5bff;--c-bills:#c2410c;--c-inc:#15803d;--c-hist:#7e22ce;--c-due:#0e7490;--c-split:#be185d;--c-owed:#a16207}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--c-home:#7b97ff;--c-bills:#fb923c;--c-inc:#4ade80;--c-hist:#c084fc;--c-due:#22d3ee;--c-split:#f472b6;--c-owed:#facc15}}
+:root[data-theme="dark"]{--c-home:#7b97ff;--c-bills:#fb923c;--c-inc:#4ade80;--c-hist:#c084fc;--c-due:#22d3ee;--c-split:#f472b6;--c-owed:#facc15}
 body[data-s="home"]{--accent:var(--c-home)}
 body[data-s="bills"]{--accent:var(--c-bills)}
 body[data-s="income"]{--accent:var(--c-inc)}
 body[data-s="hist"]{--accent:var(--c-hist)}
+body[data-s="due"]{--accent:var(--c-due)}
+body[data-s="split"]{--accent:var(--c-split)}
+body[data-s="owed"]{--accent:var(--c-owed)}
 .top{border-bottom:4px solid var(--accent);padding-bottom:8px}
-.navwrap{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 16px;background:var(--bg)}
+.navwrap{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 0 16px;background:var(--bg)}
 .navtop{position:sticky;top:0;z-index:20;padding:10px 0}
 .navbot{margin:24px 0 0}
-.nbtn{display:grid;justify-items:center;align-content:center;gap:4px;min-height:68px;padding:8px 4px;border:2px solid var(--c);border-radius:16px;background:color-mix(in srgb,var(--c) 14%,var(--surface));color:var(--ink);font:inherit;font-size:13px;font-weight:700;line-height:1.15;text-align:center;cursor:pointer}
-.nbtn svg{width:28px;height:28px;color:var(--c)}
+.nbtn{display:grid;justify-items:center;align-content:center;gap:3px;min-height:58px;padding:6px 0;border:2px solid var(--c);border-radius:12px;background:color-mix(in srgb,var(--c) 14%,var(--surface));color:var(--ink);font:inherit;font-size:10px;font-weight:700;line-height:1.15;text-align:center;cursor:pointer}
+.nbtn svg{width:22px;height:22px;color:var(--c)}
 .nbtn[aria-selected="true"]{background:var(--c);color:var(--accent-ink)}
 .nbtn[aria-selected="true"] svg{color:var(--accent-ink)}
 .nbtn:active{transform:scale(.97)}
-@media (max-width:380px){.nbtn{font-size:12px}}
+@media (max-width:340px){.nbtn{font-size:9px}}
+.loan+.loan{border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
+.pill.ok{background:color-mix(in srgb,var(--ok) 16%,var(--surface));color:var(--ok)}
+.mnav button:disabled{opacity:.3;cursor:default}
+details summary{cursor:pointer;font-weight:600;color:var(--accent);padding:6px 0}
+.lnk{border:0;background:none;color:var(--accent);font:inherit;font-weight:700;padding:6px 0;cursor:pointer;text-align:left}
+.hd td{background:color-mix(in srgb,var(--accent) 7%,var(--surface));font-size:14px}
+.hd .meta{margin:8px 0 2px;font-weight:700}
 @media (prefers-reduced-motion:reduce){.nbtn:active{transform:none}}
 
 .acts{display:flex;align-items:center;justify-content:flex-end;gap:2px}
@@ -125,6 +135,13 @@ body[data-s="hist"]{--accent:var(--c-hist)}
 .legend .dim{color:var(--muted)}
 .t td .ed{display:block;margin-left:auto}
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+button,.btn,.filebtn,.chip,.x{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button,.filebtn{transition:transform .08s ease,filter .08s ease,box-shadow .12s ease}
+button:not(:disabled):active,.filebtn:active{transform:scale(.95);filter:brightness(.88)}
+.btn:not(:disabled):active{box-shadow:inset 0 3px 8px rgba(0,0,0,.25)}
+.chip:not(:disabled):active,.ebtn:not(:disabled):active{filter:brightness(.8)}
+button:focus-visible,.filebtn:focus-within{outline:3px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){button:not(:disabled):active,.filebtn:active{transform:none}}
 </style>
 </head>
 <body data-s="home">
@@ -150,7 +167,7 @@ body[data-s="hist"]{--accent:var(--c-hist)}
   </div>
 </section>
 
-<section id="s-due" class="hidden"><button class="back" data-go="home">‹ Back to Home</button><div id="dueBody"></div></section>
+<section id="s-due" class="hidden"><div id="dueBody"></div></section>
 
 <section id="s-bills" class="hidden">
   <div class="panel" id="billTbl"></div>
@@ -166,18 +183,34 @@ body[data-s="hist"]{--accent:var(--c-hist)}
       <div class="note">A bill repeats every month from the month you add it and counts as paid once its due date has passed. Tap Edit to change a bill, either from this month onwards or for this month only, such as a variable energy bill. The × stops a bill from the month you are viewing and keeps your past months.</div>
     </div>
   </div>
-  <button class="btn ghost" style="width:100%;margin-bottom:16px" data-go="split">Splitting a bill with others? Go to Split Bills</button>
 </section>
 
 <section id="s-income" class="hidden">
-  <div class="panel">
-    <h2>Income</h2>
+  <div class="panel" id="incTbl"></div>
+  <div class="panel" id="addIncPanel">
+    <h2>Add income</h2>
     <div class="form">
-      <label>Income per month (£)<input id="inc" type="number" inputmode="decimal" min="0" step="0.01" placeholder="2400"></label>
-      <div class="note" style="margin:0">Enter your income once and it carries into every month. A change applies from the month you are viewing, and earlier months keep their old figure.</div>
+      <label>Name<input id="incn" autocapitalize="words" placeholder="Main job" maxlength="40"></label>
+      <label>Type<select id="inct"></select></label>
+      <div class="seg" role="group" aria-label="How do you want to enter it?"><button class="chip" data-im="monthly" aria-pressed="true">I know my monthly pay</button><button class="chip" data-im="yearly" aria-pressed="false">Work it out from yearly pay</button></div>
+      <div id="imMonthly"><label>Amount each month, after tax (£)<input id="inca" type="number" inputmode="decimal" min="0" step="0.01" placeholder="2400"></label></div>
+      <div id="imYearly" class="hidden form">
+        <label>Yearly pay before tax (£)<input id="calcSal" type="number" inputmode="decimal" min="0" step="100" placeholder="35000"></label>
+        <label>Where you pay tax<select id="calcReg"><option value="ruk">England, Wales or Northern Ireland</option><option value="scot">Scotland</option></select></label>
+        <details><summary>Pension, student loan and more</summary><div class="form" style="margin-top:8px">
+          <div class="two">
+            <label>Pension (% of pay)<input id="calcPen" type="number" inputmode="decimal" min="0" max="100" step="0.5" placeholder="5"></label>
+            <label>Student loan<select id="calcPlan"><option value="">None</option><option value="p1">Plan 1</option><option value="p2">Plan 2</option><option value="p4">Plan 4</option><option value="p5">Plan 5</option></select></label>
+          </div>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink)"><input type="checkbox" id="calcSac" style="width:22px;height:22px;flex:none">Pension is by salary sacrifice (also lowers National Insurance)</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink)"><input type="checkbox" id="calcPG" style="width:22px;height:22px;flex:none">I also have a postgraduate loan</label>
+        </div></details>
+        <div id="calcOut"></div>
+      </div>
+      <button class="btn" id="addinc">Add income</button>
+      <div class="note" style="margin:0">Each source repeats every month. Use Edit to change one: earlier months keep their old figure.</div>
     </div>
   </div>
-  <div class="panel" id="incTbl"></div>
   <div class="panel">
     <h2>Total savings</h2>
     <div class="big2" id="pottot">£0.00</div><div class="sub" id="potmsg"></div><div class="bar"><i id="potbar"></i></div>
@@ -201,8 +234,30 @@ body[data-s="hist"]{--accent:var(--c-hist)}
   </div>
 </section>
 
+<section id="s-owed" class="hidden">
+  <div class="panel" id="owedSum"></div>
+  <div class="panel" id="owedList"></div>
+  <div class="panel">
+    <h2>Add money owed to you</h2>
+    <div class="form">
+      <label>Who owes you<input id="lwho" autocapitalize="words" placeholder="Sam" maxlength="40"></label>
+      <label>What for (optional)<input id="lnote" placeholder="Car deposit" maxlength="60"></label>
+      <div class="two">
+        <label>Amount lent (£)<input id="lamt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="500"></label>
+        <label>Date lent<input id="ldate" type="date"></label>
+      </div>
+      <label>Repayment plan<select id="lfreq"><option value="monthly">Pays back monthly</option><option value="weekly">Pays back weekly</option><option value="none">No set plan</option></select></label>
+      <div id="lplan" class="two">
+        <label>Each payment (£)<input id="lpay" type="number" inputmode="decimal" min="0" step="0.01" placeholder="50"></label>
+        <label>First payment due<input id="lfirst" type="date"></label>
+      </div>
+      <div class="note" id="lprev" style="margin:0"></div>
+      <button class="btn" id="addloan">Add</button>
+    </div>
+  </div>
+</section>
+
 <section id="s-split" class="hidden">
-  <button class="back" data-go="home">‹ Back to Home</button>
   <div class="panel">
     <h2>Who is sharing?</h2>
     <div class="chips" id="people"></div>
@@ -234,7 +289,7 @@ body[data-s="hist"]{--accent:var(--c-hist)}
   <div class="panel">
     <h2>Back up your data</h2>
     <div class="form">
-      <div class="note" style="margin:0">Your data is stored only on this phone, so back it up now and then. Download a backup file and keep it somewhere safe, such as Google Drive, or copy the text instead. To restore, choose the file, or paste the text into the box and tap Restore. Restoring replaces what is in the app now. Moving from the Claude version? Paste its backup text here.</div>
+      <div class="note" style="margin:0">Your data is saved on this phone only, so make a backup copy now and then. Tap Download backup file and keep it somewhere safe, such as Google Drive, or email it to yourself. To restore on this or a new phone, tap Restore from file and choose that file. You can also tap Show backup to copy the text, then paste it into the box and tap Restore. Restoring replaces what is in the app now.</div>
       <textarea id="bk" rows="4" aria-label="Backup text" style="font-size:13px"></textarea>
       <div class="rowbtns"><button class="btn" id="bkdl">Download backup file</button><label class="btn ghost filebtn">Restore from file<input id="bkfile" type="file" accept=".json,application/json" hidden></label></div>
       <div class="rowbtns"><button class="btn" id="bkmake">Show backup</button><button class="btn ghost" id="bkrest">Restore</button></div>
@@ -251,7 +306,7 @@ const KEY='bills-app-v1';
 let S={bills:[],people:['Me'],items:[],pick:null,saves:[],over:{},incM:{},pot:null,me:null,editing:null};
 try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&typeof p==='object')S=Object.assign(S,p)}}catch(e){}
 const save=()=>{S.updatedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
-function hasData(){return !!(S.bills.length||S.saves.length||S.items.length||S.once.length||Object.keys(S.incM).length||S.pot.start||S.pot.goal)}
+function hasData(){return !!(S.bills.length||S.saves.length||S.items.length||S.once.length||S.inc.length||S.loans.length||S.pot.start||S.pot.goal)}
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -259,11 +314,13 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 const p2=n=>String(n).padStart(2,'0');
 const mk=d=>d.getFullYear()+'-'+p2(d.getMonth()+1);
 const iso=d=>mk(d)+'-'+p2(d.getDate());
-const NOW=mk(new Date());let VIEW=NOW;
+let NOW=mk(new Date());let VIEW=NOW,CUR='home',OPENH=null;
 function norm(){
   S.bills=S.bills||[];S.people=(S.people&&S.people.length)?S.people:['Me'];S.items=S.items||[];S.saves=S.saves||[];
-  S.over=S.over||{};S.incM=S.incM||{};S.once=S.once||[];S.sort=S.sort||'day';
+  S.over=S.over||{};S.hist=S.hist||{};S.incM=S.incM||{};S.inc=S.inc||[];S.loans=S.loans||[];S.loans.forEach(l=>{l.paid=l.paid||[]});S.once=S.once||[];S.sort=S.sort||'day';S.calc=S.calc||{region:'ruk',salary:'',pension:'',plan:'',pg:false,sacrifice:false};
   S.pot=S.pot||{start:0,goal:0};
+  if(Object.keys(S.incM).length){const ks=Object.keys(S.incM).sort();ks.forEach((k,i)=>{if(S.incM[k]>0)S.inc.push({id:'i'+Date.now().toString(36)+i,name:'Income',type:'Salary',amount:S.incM[k],from:k,end:ks[i+1]})})}
+  S.incM={};
   if(!S.pot.sinceDate)S.pot.sinceDate=iso(new Date());
   if(!S.pot.sinceAt)S.pot.sinceAt=Date.now();
   S.bills.forEach(b=>{if(!b.from)b.from=NOW});S.items.forEach(i=>{if(!i.from)i.from=NOW});
@@ -283,6 +340,9 @@ const today=()=>{const t=new Date();t.setHours(0,0,0,0);return t};
 /* a bill or saving counts as paid once its due date has passed */
 const isPaid=(b,m)=>m<NOW?true:m>NOW?false:dayDate(m,b.day)<today();
 const carry=(map,m)=>{let best=null;Object.keys(map).sort().forEach(k=>{if(k<=m)best=k});return best?map[best]:0};
+const INC_TYPES=['Salary','Self-employed','Benefits','Pension','Interest or investments','Rental','Gift or other'];
+const incOf=m=>S.inc.filter(i=>active(i,m));
+const incTot=m=>incOf(m).reduce((t,i)=>t+amtOf(i,m),0);
 const savTotal=m=>S.saves.filter(s=>active(s,m)).reduce((t,s)=>t+amtOf(s,m),0);
 const meName=()=>S.people.includes(S.me)?S.me:S.people[0];
 function sharedBills(m){const me=meName();return S.items.filter(i=>active(i,m)).map(i=>{const by=i.by.filter(p=>S.people.includes(p));return by.includes(me)?{id:'s_'+i.id,name:i.name,share:by.length,amount:i.amount/by.length,day:i.day||1,from:i.from,end:i.end,shared:1}:null}).filter(Boolean)}
@@ -302,11 +362,27 @@ function savedSince(){
   S.once.filter(o=>o.kind==='sav').forEach(o=>{if(onceDate(o)<=today()&&(o.at>S.pot.sinceAt||o.date>sd))tot+=o.amount});
   return tot;
 }
-function calc(m){
+function liveCalc(m){
   const bl=billsOf(m),oe=onceOf('exp',m),os=onceOf('sav',m),sum=a=>a.reduce((s,o)=>s+o.amount,0);
   const bTot=bl.reduce((s,b)=>s+amtOf(b,m),0)+sum(oe),bPaid=bl.filter(b=>isPaid(b,m)).reduce((s,b)=>s+amtOf(b,m),0)+sum(oe.filter(oncePaid));
-  const sv=S.saves.filter(s=>active(s,m)),sTot=sv.reduce((t,s)=>t+amtOf(s,m),0)+sum(os),sPaid=sv.filter(s=>isPaid(s,m)).reduce((t,s)=>t+amtOf(s,m),0)+sum(os.filter(oncePaid)),inc=carry(S.incM,m);
+  const sv=S.saves.filter(s=>active(s,m)),sTot=sv.reduce((t,s)=>t+amtOf(s,m),0)+sum(os),sPaid=sv.filter(s=>isPaid(s,m)).reduce((t,s)=>t+amtOf(s,m),0)+sum(os.filter(oncePaid)),inc=incTot(m);
   return{bl,bTot,bPaid,sTot,sPaid,inc,free:inc-sTot-bTot};
+}
+/* finished months are saved as they were, so later changes never rewrite them */
+function calc(m){
+  const h=m<NOW&&S.hist[m];if(!h)return liveCalc(m);
+  const t=a=>a.reduce((s,x)=>s+x[1],0),bT=t(h.bills)+t(h.exp),sT=t(h.sav)+t(h.osav);
+  return{bl:[],bTot:bT,bPaid:bT,sTot:sT,sPaid:sT,inc:h.inc,free:h.inc-bT-sT};
+}
+function snap(k){
+  const p=a=>a.map(o=>[o.name,o.amount]);
+  return{inc:incTot(k),incs:incOf(k).map(i=>[i.name+' ('+i.type+')',amtOf(i,k)]),bills:billsOf(k).map(b=>[b.name,amtOf(b,k)]),sav:S.saves.filter(s=>active(s,k)).map(s=>[s.name,amtOf(s,k)]),exp:p(onceOf('exp',k)),osav:p(onceOf('sav',k))};
+}
+function freeze(){
+  const first=S.bills.map(b=>b.from).concat(S.saves.map(s=>s.from),S.items.map(i=>i.from),S.inc.map(i=>i.from)).sort()[0];
+  if(!first)return;let ch=false;
+  for(let k=first;k<NOW;k=shift(k,1))if(!S.hist[k]){S.hist[k]=snap(k);ch=true}
+  if(ch)save();
 }
 function potInfo(){
   const tot=S.pot.start+savedSince(),g=S.pot.goal||0,mo=savTotal(NOW);let msg='Set a goal to see your progress.';
@@ -338,9 +414,9 @@ function renderHome(){
   const row=(n,a,cls)=>`<tr class="${cls||''}"><td>${n}</td><td class="r"><span class="a ${cls==='total'&&a<0?'neg':''}">${gbp.format(a)}</span></td></tr>`;
   let h=`<div class="hero"><div class="big ${c.free<0?'neg':''}">${gbp.format(c.free)}</div><div class="sub">left to spend in ${mname(VIEW)}, after bills and savings</div><div class="bar"><i style="width:${c.bTot?Math.round(c.bPaid/c.bTot*100):0}%"></i></div><div class="sub">${gbp.format(c.bPaid)} of ${gbp.format(c.bTot)} in bills paid so far</div></div>`;
   if(!c.inc)h+=`<div class="panel"><div class="note" style="margin:0 0 10px">Add your monthly income to see what is left to spend.</div><button class="btn" data-go="income">Add income</button></div>`;
-  h+=`<div class="shortcuts"><button class="ebtn big" data-go="due">Due dates</button><button class="ebtn big" data-go="split">Split bills</button></div>`;
   h+=`<div class="panel"><h2>Coming up</h2>`+(due.length?`<table class="t"><tbody>${due.slice(0,4).map(dueRow).join('')}</tbody></table>`:'<div class="empty">Nothing due in the next 60 days.</div>')+`<button class="btn ghost" style="margin-top:10px;width:100%" data-go="due">See all due dates</button></div>`;
   h+=`<div class="panel"><h2>${mname(VIEW)}</h2><table class="t"><tbody>${row('Income',c.inc)}${row('Savings',-c.sTot)}${row('Bills',-c.bTot)}${row('Left to spend',c.free,'total')}</tbody></table></div>`;
+  h+=owedHome();
   h+=`<div class="panel"><h2>Total savings</h2><div class="big2">${gbp.format(p.tot)}</div><div class="sub">${p.msg}</div><div class="bar"><i style="width:${p.pct}%"></i></div><button class="btn ghost" style="margin-top:12px;width:100%" data-go="income" data-sv="1">Manage savings</button></div>`;
   $('homeBody').innerHTML=h;
 }
@@ -365,12 +441,23 @@ function editRow(b,cols,shared){
     ${shared?'':`<div class="note" style="margin:0">"Onwards" updates the name, amount and day for this month and every month after, and keeps earlier months as they were. "This month only" changes just the amount.</div>`}
   </div></td></tr>`;
 }
+function incEdit(i){
+  return `<tr class="editrow"><td colspan="3"><div class="form">
+    <label>Name<input id="ef-n" autocapitalize="words" value="${esc(i.name)}" maxlength="40"></label>
+    <div class="two"><label>Type<select id="ef-t">${INC_TYPES.map(t=>`<option${t===i.type?' selected':''}>${t}</option>`).join('')}</select></label>
+    <label>Amount (£)<input id="ef-a" type="number" inputmode="decimal" min="0" step="0.01" value="${Math.round(amtOf(i,VIEW)*100)/100}"></label></div>
+    <button class="btn" data-esave="${i.id}" data-mode="all">Save from ${mname(VIEW)} onwards</button>
+    <button class="btn ghost" data-esave="${i.id}" data-mode="one">Save for ${mname(VIEW)} only</button>
+    <button class="btn ghost" data-ecancel="1">Cancel</button>
+    <div class="note" style="margin:0">"Onwards" updates this month and every month after, and keeps earlier months as they were. "This month only" changes just the amount.</div>
+  </div></td></tr>`;
+}
 const nextPay=b=>{const t=today();for(const k of [NOW,shift(NOW,1),shift(NOW,2)]){if(active(b,k)){const d=dayDate(k,b.day);if(d>=t)return d}}return null};
 const nextTxt=b=>{const d=nextPay(b);return d?'Next payment: '+fmtD(d):''};
 function renderBillsTbl(){
   const by=S.sort==='amt'?(a,b)=>amtOf(b,VIEW)-amtOf(a,VIEW):(a,b)=>a.day-b.day;
   const bl=billsOf(VIEW).sort(by),tot=bl.reduce((s,b)=>s+amtOf(b,VIEW),0);
-  $('billTbl').innerHTML=`<h2>Your bills</h2><div class="note" style="margin:0 0 8px">Showing ${mname(VIEW)}. Use the arrows at the top to look at another month.</div>`+(bl.length?`<div class="sortbar"><span class="meta">Sort by</span><button class="chip" data-sort="day" aria-pressed="${S.sort!=='amt'}">Date</button><button class="chip" data-sort="amt" aria-pressed="${S.sort==='amt'}">Amount</button></div><table class="t"><thead><tr><th>Bill</th><th>Due</th><th class="r">Amount</th><th></th></tr></thead><tbody>${bl.map(b=>`<tr><td><div class="nm">${esc(b.name)}</div><div class="meta">${b.shared?`Your share, split ${b.share} ways. `:''}${nextTxt(b)}</div></td><td>${b.day}${ord(b.day)}</td><td class="r"><div class="a">${gbp.format(amtOf(b,VIEW))}</div></td><td class="r">${btns(b.id,`data-delbill="${b.id}"`)}</td></tr>${S.editing===b.id?editRow(b,4,b.shared):''}`).join('')}</tbody><tfoot><tr><td colspan="2">Total</td><td class="r">${gbp.format(tot)}</td><td></td></tr></tfoot></table>`:'<div class="empty">No bills yet. Add your first one below.</div>');
+  $('billTbl').innerHTML=`<h2>Your bills</h2><div class="note" style="margin:0 0 8px">Showing ${mname(VIEW)}. Use the arrows to plan ahead. Past months are kept in History.</div>`+(bl.length?`<div class="sortbar"><span class="meta">Sort by</span><button class="chip" data-sort="day" aria-pressed="${S.sort!=='amt'}">Date</button><button class="chip" data-sort="amt" aria-pressed="${S.sort==='amt'}">Amount</button></div><table class="t"><thead><tr><th>Bill</th><th>Due</th><th class="r">Amount</th><th></th></tr></thead><tbody>${bl.map(b=>`<tr><td><div class="nm">${esc(b.name)}</div><div class="meta">${b.shared?`Your share, split ${b.share} ways. `:''}${nextTxt(b)}</div></td><td>${b.day}${ord(b.day)}</td><td class="r"><div class="a">${gbp.format(amtOf(b,VIEW))}</div></td><td class="r">${btns(b.id,`data-delbill="${b.id}"`)}</td></tr>${S.editing===b.id?editRow(b,4,b.shared):''}`).join('')}</tbody><tfoot><tr><td colspan="2">Total</td><td class="r">${gbp.format(tot)}</td><td></td></tr></tfoot></table>`:'<div class="empty">No bills yet. Add your first one below.</div>');
 }
 let QK='exp';
 function renderOnce(){
@@ -382,12 +469,12 @@ function renderOnce(){
 }
 function setDates(){
   const def=VIEW===NOW?iso(new Date()):VIEW+'-01',el=$('qd');
-  if(!el.value||el.value.slice(0,7)!==VIEW)el.value=def;
+  el.min=NOW+'-01';
+  if(!el.value||el.value.slice(0,7)<NOW||el.dataset.v!==VIEW){el.value=def;el.dataset.v=VIEW}
 }
 function renderIncome(){
-  const ks=Object.keys(S.incM).sort().reverse();
-  $('incTbl').innerHTML='<h2>Income history</h2>'+(ks.length?`<table class="t"><thead><tr><th>From</th><th class="r">Per month</th></tr></thead><tbody>${ks.map(k=>`<tr><td>${mname(k)}</td><td class="r">${gbp.format(S.incM[k])}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No income entered yet.</div>');
-  if(document.activeElement!==$('inc'))$('inc').value=carry(S.incM,VIEW)||'';
+  const l=incOf(VIEW),tot=incTot(VIEW);
+  $('incTbl').innerHTML='<h2>Your income</h2>'+(l.length?`<div class="note" style="margin:0 0 8px">Showing ${mname(VIEW)}.</div><table class="t"><thead><tr><th>Source</th><th class="r">Per month</th><th></th></tr></thead><tbody>${l.map(i=>`<tr><td><div class="nm">${esc(i.name)}</div><div class="meta">${esc(i.type)}${i.yearly?' · from '+gbp.format(i.yearly).replace('.00','')+' a year, after tax':''}</div></td><td class="r"><div class="a">${gbp.format(amtOf(i,VIEW))}</div></td><td class="r">${btns(i.id,`data-delinc="${i.id}"`)}</td></tr>${S.editing===i.id?incEdit(i):''}`).join('')}</tbody><tfoot><tr><td>Total</td><td class="r">${gbp.format(tot)}</td><td></td></tr></tfoot></table>`:'<div class="empty">No income yet. Add your first source below.</div>');
 }
 function renderSavings(){
   const sv=S.saves.filter(s=>active(s,VIEW)),p=potInfo(),tot=savTotal(VIEW);
@@ -435,42 +522,54 @@ function renderChart(ms,futureFrom){
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Monthly spending and savings. ${esc(desc)}">${g}</svg>
   <div class="legend"><span><i style="background:var(--accent)"></i>Spending (bills)</span><span><i style="background:var(--ok)"></i>Savings</span><span class="dim">Dashed line and hollow dots: forecast</span></div>`;
 }
+const histRows=(t,a)=>a.length?`<div class="meta">${t}</div>`+a.map(x=>`<div style="display:flex;justify-content:space-between;gap:12px"><span>${esc(x[0])}</span><span>${gbp.format(x[1])}</span></div>`).join(''):'';
+const monthCell=k=>S.hist[k]&&k<NOW?`<button class="lnk" data-hm="${k}" aria-expanded="${OPENH===k}">${mname(k)} ${OPENH===k?'▴':'▾'}</button>`:mname(k);
+const histDetail=k=>{const h=S.hist[k];if(OPENH!==k||!h||k>=NOW)return'';
+  return `<tr class="hd"><td colspan="4"><div style="display:flex;justify-content:space-between"><b>Income</b><b>${gbp.format(h.inc)}</b></div>${histRows('Income sources',h.incs||[])}${histRows('Bills',h.bills)}${histRows('One-off expenses',h.exp)}${histRows('Savings',h.sav)}${histRows('One-off savings',h.osav)}</td></tr>`};
 function renderHist(){
   if(!S.bills.length&&!S.items.length&&!S.saves.length){$('histlist').innerHTML='<h2>History</h2><div class="empty">Add bills and savings to see your month-by-month history.</div>';return}
-  const first=S.bills.map(b=>b.from).concat(S.saves.map(s=>s.from),S.items.map(i=>i.from),Object.keys(S.incM)).sort()[0];
+  const first=S.bills.map(b=>b.from).concat(S.saves.map(s=>s.from),S.items.map(i=>i.from),S.inc.map(i=>i.from)).sort()[0];
   const start=first>shift(NOW,-11)?first:shift(NOW,-11),all=[];
   for(let k=first;k<=NOW;k=shift(k,1))all.push(k);
   const ms=[];for(let k=start;k<=shift(NOW,3);k=shift(k,1))ms.push(k);
   $('histlist').innerHTML='<h2>Spending and savings</h2>'+renderChart(ms)+'<h2 style="margin-top:20px">Month by month</h2><table class="t"><thead><tr><th>Month</th><th class="r">Bills</th><th class="r">Saved</th><th class="r">Left</th></tr></thead><tbody>'+all.slice().reverse().map(k=>{
     const c=calc(k);
-    return `<tr><td>${mname(k)}</td><td class="r">${gbp.format(c.bTot)}</td><td class="r">${gbp.format(c.sTot)}</td><td class="r"><span class="a ${c.free<0?'neg':''}">${c.inc?gbp.format(c.free):'–'}</span></td></tr>`}).join('')+'</tbody></table><div class="note">Left is what remained after bills and savings, shown when income was set.</div>';
+    return `<tr><td>${monthCell(k)}</td><td class="r">${gbp.format(c.bTot)}</td><td class="r">${gbp.format(c.sTot)}</td><td class="r"><span class="a ${c.free<0?'neg':''}">${c.inc?gbp.format(c.free):'–'}</span></td></tr>${histDetail(k)}`}).join('')+'</tbody></table><div class="note">Tap a past month to see what was in it. Finished months are kept exactly as they were, so changing your income or bills later does not alter them. Left is what remained after bills and savings.</div>';
 }
 function renderAll(){
+  freeze();
   $('mlabel').textContent=mname(VIEW);
+  $('pm').disabled=VIEW<=NOW;
   $('tonowW').classList.toggle('hidden',VIEW===NOW);
   $('vnote').textContent=VIEW<NOW?'You are looking at a past month.':VIEW>NOW?'You are looking at a future month.':'';
   const from=VIEW===NOW?'':' from '+mname(VIEW);
-  $('addbill').textContent='Add bill'+from;$('addsav').textContent='Add saving'+from;$('additem').textContent='Add cost'+from;
-  renderOnce();setDates();
-  renderHome();renderDue();renderBillsTbl();renderIncome();renderSavings();renderSplit();renderHist();
+  $('addbill').textContent='Add bill'+from;$('addinc').textContent='Add income'+from;$('addsav').textContent='Add saving'+from;$('additem').textContent='Add cost'+from;
+  renderOnce();setDates();renderCalc();
+  renderHome();renderDue();renderBillsTbl();renderIncome();renderSavings();renderSplit();renderHist();renderOwed();
 }
 
+/* button feedback: a short buzz on phones that support it */
+document.addEventListener('click',e=>{const b=e.target.closest('button,.filebtn');if(b&&!b.disabled){try{navigator.vibrate&&navigator.vibrate(12)}catch(_){}}},true);
 /* ---------- navigation ---------- */
-const SCR=['home','due','bills','split','income','hist'];
+const SCR=['home','due','bills','split','income','owed','hist'];
 const IC=(p)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const TABS=[['home','Home','--c-home',IC('<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>')],
+ ['due','Due','--c-due',IC('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>')],
  ['bills','Bills','--c-bills',IC('<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>')],
- ['income','Income &amp; Savings','--c-inc',IC('<path d="M16 8a4 4 0 0 0-8 0v3H6M8 11h6M8 11v6M6 17h11"/>')],
+ ['split','Split','--c-split',IC('<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.5 3-6 6-6s6 2.5 6 6M15 14.5c3 0 6 1.5 6 5"/>')],
+ ['income','Income','--c-inc',IC('<path d="M16 8a4 4 0 0 0-8 0v3H6M8 11h6M8 11v6M6 17h11"/>')],
+ ['owed','Owed','--c-owed',IC('<path d="M3 12h13M12 7l5 5-5 5"/><path d="M21 5v14"/>')],
  ['hist','History','--c-hist',IC('<path d="M4 20V4"/><path d="M4 20h16"/><path d="M7 15l4-4 3 3 5-6"/>')]];
-const navHtml=()=>TABS.map(t=>`<button class="nbtn" style="--c:var(${t[2]})" data-go="${t[0]}" data-tab="${t[0]}" aria-selected="false">${t[3]}<span>${t[1]}</span></button>`).join('');
+const navHtml=()=>TABS.map(t=>`<button class="nbtn" style="--c:var(${t[2]})" data-go="${t[0]}" data-tab="${t[0]}" aria-label="${t[1]=='Due'?'Due dates':t[1]=='Split'?'Split bills':t[1]=='Income'?'Income and savings':t[1]=='Owed'?'Money owed to you':t[1]}" aria-selected="false">${t[3]}<span>${t[1]}</span></button>`).join('');
 $('navTop').innerHTML=navHtml();
-const TABOF={due:'home',split:'home'};
+const TABOF={};
 function show(s,focus){
+  if(s!==CUR){VIEW=NOW;CUR=s}
   SCR.forEach(k=>$('s-'+k).classList.toggle('hidden',k!==s));
   const tab=TABOF[s]||s;
   document.body.dataset.s=tab;
   document.querySelectorAll('.nbtn').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab));
-  $('mwrap').classList.toggle('hidden',s==='due'||s==='hist');
+  $('mwrap').classList.toggle('hidden',s==='due'||s==='hist'||s==='owed');
   S.editing=null;renderAll();window.scrollTo(0,0);
   if(focus){const el=$(focus);if(el)el.scrollIntoView({block:'start'})}
 }
@@ -484,9 +583,11 @@ function removing(label,fn){
   const snap=JSON.stringify(S);fn();save();renderAll();
   toast(label+' removed',()=>{S=JSON.parse(snap);norm();S.pick=null;save();renderAll()});
 }
-function go(n){VIEW=shift(VIEW,n);S.editing=null;renderAll()}
+function go(n){if(shift(VIEW,n)<NOW)return;VIEW=shift(VIEW,n);S.editing=null;renderAll()}
 $('pm').onclick=()=>go(-1);$('nm').onclick=()=>go(1);
 $('tonow').onclick=()=>{VIEW=NOW;S.editing=null;renderAll()};
+function tick(){const n=mk(new Date());if(n===NOW)return;const was=VIEW===NOW||VIEW<n;NOW=n;if(was)VIEW=n;S.editing=null;renderAll()}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});window.addEventListener('focus',tick);setInterval(tick,60000);
 
 document.addEventListener('click',e=>{
   const t=e.target.closest('button,input');if(!t)return;const d=t.dataset;
@@ -495,23 +596,35 @@ document.addEventListener('click',e=>{
     if(b)removing(b.name,()=>{if(b.from>=VIEW){const k=arr.filter(x=>x!==b);if(sh)S.items=k;else S.bills=k}else b.end=VIEW})}
   else if(d.delsav){const s=S.saves.find(x=>x.id===d.delsav);
     if(s)removing(s.name,()=>{if(s.from>=VIEW)S.saves=S.saves.filter(x=>x!==s);else s.end=VIEW})}
+  else if(d.hm){OPENH=OPENH===d.hm?null:d.hm;renderHist()}
+  else if(d.lpay||d.lsch){const id=d.lpay||d.lsch,m=d.lpay?'pay':'sch';LOPEN=LOPEN&&LOPEN.id===id&&LOPEN.m===m?null:{id,m};renderOwed();const i=$('lp-a');if(i&&m==='pay'){i.focus();i.select()}}
+  else if(d.lcancel){LOPEN=null;renderOwed()}
+  else if(d.lsave){const l=S.loans.find(x=>x.id===d.lsave),a=parseFloat($('lp-a').value),dt=$('lp-d').value;
+    if(!l)return;if(!(a>0)){$('lp-a').focus();return}if(!dt){$('lp-d').focus();return}
+    const snap=JSON.stringify(S);l.paid.push({id:uid(),date:dt,amount:a});LOPEN=null;save();renderAll();
+    toast(loanLeft(l)<=0?'✓ '+l.who+' has paid back in full':'✓ Payment of '+gbp.format(a)+' recorded',()=>{S=JSON.parse(snap);norm();S.pick=null;save();renderAll()})}
+  else if(d.lunpay){const [a,b]=d.lunpay.split('|');removing('Payment',()=>{const l=S.loans.find(x=>x.id===a);if(l)l.paid=l.paid.filter(p=>p.id!==b)})}
+  else if(d.ldel){const l=S.loans.find(x=>x.id===d.ldel);if(l)removing(l.who,()=>{S.loans=S.loans.filter(x=>x!==l);LOPEN=null})}
+  else if(d.im){IM=d.im;renderCalc()}
   else if(d.sort){S.sort=d.sort;save();renderAll()}
   else if(d.qk){QK=d.qk;renderOnce()}
   else if(d.delonce){const o=S.once.find(x=>x.id===d.delonce);if(o)removing(o.name,()=>{S.once=S.once.filter(x=>x!==o)})}
   else if(d.edit){S.editing=d.edit;renderAll();const i=$('ef-a');if(i){i.focus();i.select()}}
   else if(d.ecancel){S.editing=null;renderAll()}
   else if(d.esave){
-    const id=d.esave,sh=id.startsWith('s_'),item=sh?null:(S.bills.concat(S.saves)).find(x=>x.id===id);
+    const id=d.esave,sh=id.startsWith('s_'),item=sh?null:(S.bills.concat(S.saves,S.inc)).find(x=>x.id===id);
     const a=parseFloat($('ef-a').value);if(!(a>=0)){$('ef-a').focus();return}
+    const snap=JSON.stringify(S);
     if(d.mode==='one'||sh){(S.over[VIEW]=S.over[VIEW]||{})[id]=a}
     else if(item){
-      const nm=cap($('ef-n').value.trim()),dy=parseInt($('ef-d').value,10);
-      if(!nm){$('ef-n').focus();return}if(!(dy>=1&&dy<=31)){$('ef-d').focus();return}
-      if(item.from>=VIEW){item.name=nm;item.amount=a;item.day=dy;if(S.over[VIEW])delete S.over[VIEW][id]}
-      else{const arr=S.saves.includes(item)?S.saves:S.bills;item.end=VIEW;arr.push({id:uid(),name:nm,amount:a,day:dy,from:VIEW})}
+      const isI=S.inc.includes(item),nm=cap($('ef-n').value.trim()),dy=isI?1:parseInt($('ef-d').value,10);
+      if(!nm){$('ef-n').focus();return}if(!isI&&!(dy>=1&&dy<=31)){$('ef-d').focus();return}
+      if(item.from>=VIEW){item.name=nm;item.amount=a;item.day=dy;if(isI){item.type=$('ef-t').value;delete item.yearly}if(S.over[VIEW])delete S.over[VIEW][id]}
+      else{const arr=isI?S.inc:S.saves.includes(item)?S.saves:S.bills,n={id:uid(),name:nm,amount:a,day:dy,from:VIEW};if(isI)n.type=$('ef-t').value;item.end=VIEW;arr.push(n)}
     }
-    S.editing=null;save();renderAll();
+    S.editing=null;save();renderAll();toast('✓ Changes saved',()=>{S=JSON.parse(snap);norm();S.pick=null;save();renderAll()});
   }
+  else if(d.delinc){const i=S.inc.find(x=>x.id===d.delinc);if(i)removing(i.name,()=>{if(i.from>=VIEW)S.inc=S.inc.filter(x=>x!==i);else i.end=VIEW})}
   else if(d.delperson){removing(d.delperson,()=>{S.people=S.people.filter(p=>p!==d.delperson);S.items.forEach(i=>i.by=i.by.filter(p=>p!==d.delperson));S.items=S.items.filter(i=>i.by.length)})}
   else if(d.delitem){const b=S.items.find(i=>i.id===d.delitem);if(b)removing(b.name,()=>{if(b.from>=VIEW)S.items=S.items.filter(i=>i!==b);else b.end=VIEW})}
   else if(d.pick){S.pick=S.pick.includes(d.pick)?S.pick.filter(p=>p!==d.pick):S.pick.concat(d.pick);renderSplit()}
@@ -522,21 +635,39 @@ const dayVal=id=>Math.min(31,Math.max(1,parseInt($(id).value,10)||1));
 $('addbill').onclick=()=>{
   const name=cap($('bn').value.trim()),amount=parseFloat($('ba').value),day=parseInt($('bd').value,10);
   if(!name){$('bn').focus();return}if(!(amount>=0)){$('ba').focus();return}if(!(day>=1&&day<=31)){$('bd').focus();return}
-  S.bills.push({id:uid(),name,amount,day,from:VIEW});save();['bn','ba','bd'].forEach(i=>$(i).value='');renderAll();toast(name+' added',()=>show('home'),'Go to Home');
+  S.bills.push({id:uid(),name,amount,day,from:VIEW});save();['bn','ba','bd'].forEach(i=>$(i).value='');renderAll();toast('✓ '+name+' added',()=>show('home'),'Go to Home');
 };
 $('addsav').onclick=()=>{
   const name=cap($('sn').value.trim()),amount=parseFloat($('sa').value);
   if(!name){$('sn').focus();return}if(!(amount>=0)){$('sa').focus();return}
-  S.saves.push({id:uid(),name,amount,day:dayVal('sd'),from:VIEW,added:iso(new Date())});save();['sn','sa','sd'].forEach(i=>$(i).value='');renderAll();toast(name+' added',()=>show('home'),'Go to Home');
+  S.saves.push({id:uid(),name,amount,day:dayVal('sd'),from:VIEW,added:iso(new Date())});save();['sn','sa','sd'].forEach(i=>$(i).value='');renderAll();toast('✓ '+name+' added',()=>show('home'),'Go to Home');
 };
 function addOnce(kind,n,a,d){
   const name=cap($(n).value.trim()),amount=parseFloat($(a).value),date=$(d).value;
   if(!name){$(n).focus();return}if(!(amount>=0)){$(a).focus();return}if(!date){$(d).focus();return}
-  S.once.push({id:uid(),kind,name,amount,date,at:Date.now()});save();$(n).value='';$(a).value='';
-  VIEW=date.slice(0,7);renderAll();
+  const dm=date.slice(0,7);
+  if(dm<NOW){toast('That date is in a finished month, which is kept as it was. Pick a date from this month onwards.',()=>{},'OK');return}
+  const id=uid();S.once.push({id,kind,name,amount,date,at:Date.now()});save();$(n).value='';$(a).value='';
+  renderAll();
+  if(dm!==VIEW)toast('Added to '+mname(dm),()=>{S.once=S.once.filter(o=>o.id!==id);save();renderAll()});
 }
 $('addq').onclick=()=>addOnce(QK,'qn','qa','qd');
-$('inc').oninput=()=>{S.incM[VIEW]=parseFloat($('inc').value)||0;save();renderAll()};
+$('inct').innerHTML=INC_TYPES.map(t=>`<option>${t}</option>`).join('');
+['lamt','lpay','lfreq','lfirst'].forEach(i=>{$(i).addEventListener('input',loanPreview);$(i).addEventListener('change',loanPreview)});
+$('addloan').onclick=()=>{
+  const who=cap($('lwho').value.trim()),note=$('lnote').value.trim(),amount=parseFloat($('lamt').value),date=$('ldate').value,freq=$('lfreq').value,pay=parseFloat($('lpay').value),first=$('lfirst').value;
+  if(!who){$('lwho').focus();return}if(!(amount>0)){$('lamt').focus();return}if(!date){$('ldate').focus();return}
+  if(freq!=='none'){if(!(pay>0)){$('lpay').focus();return}if(!first){$('lfirst').focus();return}}
+  S.loans.push({id:uid(),who,note,amount,date,freq,pay:freq==='none'?0:pay,first:freq==='none'?'':first,paid:[]});
+  save();['lwho','lnote','lamt','lpay'].forEach(i=>$(i).value='');renderAll();toast('✓ '+who+' added to money owed to you',()=>show('home'),'Go to Home');
+};
+$('addinc').onclick=()=>{
+  const name=cap($('incn').value.trim()),yr=IM==='yearly',r=ukPay(S.calc),amount=yr?Math.round(r.net/12*100)/100:parseFloat($('inca').value);
+  if(!name){$('incn').focus();return}
+  if(yr){if(!(r.gross>0)){$('calcSal').focus();return}}else if(!(amount>=0)){$('inca').focus();return}
+  const it={id:uid(),name,type:$('inct').value,amount,from:VIEW};if(yr)it.yearly=r.gross;
+  S.inc.push(it);save();$('incn').value='';$('inca').value='';renderAll();toast('✓ '+name+' added',()=>show('home'),'Go to Home');
+};
 $('pot').oninput=()=>{S.pot.start=parseFloat($('pot').value)||0;S.pot.sinceDate=iso(new Date());S.pot.sinceAt=Date.now();save();renderAll()};
 $('goal').oninput=()=>{S.pot.goal=parseFloat($('goal').value)||0;save();renderAll()};
 $('meSel').onchange=()=>{S.me=$('meSel').value;save();renderAll()};
@@ -548,13 +679,122 @@ $('additem').onclick=()=>{
   const name=cap($('in').value.trim()),amount=parseFloat($('ia').value);
   if(!name){$('in').focus();return}if(!(amount>=0)){$('ia').focus();return}if(!S.pick.length)return;
   S.items.push({id:uid(),name,amount,by:S.pick.slice(),day:dayVal('iday'),from:VIEW});save();
-  $('in').value='';$('ia').value='';$('iday').value='';renderAll();toast(name+' added',()=>show('home'),'Go to Home');
+  $('in').value='';$('ia').value='';$('iday').value='';renderAll();toast('✓ '+name+' added',()=>show('home'),'Go to Home');
 };
-$('bkmake').onclick=()=>{const t=$('bk');t.value=JSON.stringify(S);t.focus();t.select();try{document.execCommand('copy')}catch(e){}};
+$('bkmake').onclick=()=>{const t=$('bk');t.value=JSON.stringify(S);t.focus();t.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}toast(ok?'✓ Backup copied. Paste it somewhere safe':'Backup shown. Select the text and copy it',()=>{},'OK')};
 $('bkrest').onclick=()=>{
-  try{const p=JSON.parse($('bk').value);if(!p||!Array.isArray(p.bills))throw 0;S=Object.assign({pick:null,me:null},p);norm();save();renderAll()}
-  catch(e){$('bk').value='';$('bk').placeholder='That text is not a valid backup. Paste the full text you copied.'}
+  try{const p=JSON.parse($('bk').value);if(!p||!Array.isArray(p.bills))throw 0;const snap=JSON.stringify(S);S=Object.assign({pick:null,me:null},p);norm();save();renderAll();$('bk').value='';toast('✓ Backup restored',()=>{S=JSON.parse(snap);norm();S.pick=null;save();renderAll()})}
+  catch(e){$('bk').value='';$('bk').placeholder='That text is not a valid backup. Paste the full text you copied.';toast('That text is not a valid backup',()=>{},'OK')}
 };
+/* ---------- money owed to you ---------- */
+const pd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const fmtY=d=>d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+const r2=x=>Math.round(x*100)/100;
+let LOPEN=null;
+const loanPaid=l=>r2(l.paid.reduce((t,p)=>t+p.amount,0));
+const loanLeft=l=>Math.max(0,r2(l.amount-loanPaid(l)));
+function schedule(l){
+  if(l.freq==='none'||!(l.pay>0)||!(l.amount>0)||!l.first)return [];
+  const out=[],f=pd(l.first),fm=mk(f);let rem=l.amount;
+  for(let i=0;rem>0.004&&i<600;i++){
+    const a=Math.min(l.pay,r2(rem)),d=l.freq==='weekly'?new Date(f.getFullYear(),f.getMonth(),f.getDate()+7*i):dayDate(shift(fm,i),f.getDate());
+    out.push({date:d,amt:r2(a)});rem=r2(rem-a);
+  }
+  return out;
+}
+function loanRows(l){
+  const paid=loanPaid(l);let cum=0,found=false;
+  return schedule(l).map(s=>{cum=r2(cum+s.amt);let st;
+    if(paid>=cum-0.005)st='done';else if(s.date<today())st='late';else if(!found){st='next';found=true}else st='up';
+    return {...s,st,cum}});
+}
+function nextLine(l){
+  if(loanLeft(l)<=0)return '<span style="color:var(--ok);font-weight:600">✓ Paid back in full</span>';
+  const rows=loanRows(l);if(!rows.length)return 'No set plan. Record payments as they come in.';
+  const late=rows.filter(r=>r.st==='late'),nx=rows.find(r=>r.st==='next');let h='';
+  if(late.length)h+=`<span style="color:var(--warn);font-weight:600">${gbp.format(r2(late[late.length-1].cum-loanPaid(l)))} overdue since ${fmtD(late[0].date)}.</span> `;
+  if(nx)h+=`Next: ${gbp.format(nx.amt)} on ${fmtD(nx.date)}.`;
+  return h||'Payments are due as per the schedule.';
+}
+function payForm(l){
+  const rows=loanRows(l),left=loanLeft(l),late=rows.filter(r=>r.st==='late'),nx=rows.find(r=>r.st==='next');
+  const def=late.length?r2(late[late.length-1].cum-loanPaid(l)):nx?nx.amt:left;
+  return `<div class="form" style="margin-top:12px"><div class="two"><label>Amount received (£)<input id="lp-a" type="number" inputmode="decimal" min="0" step="0.01" value="${Math.min(def,left)}"></label><label>Date<input id="lp-d" type="date" value="${iso(new Date())}"></label></div><button class="btn" data-lsave="${l.id}">Save payment</button><button class="btn ghost" data-lcancel="1">Cancel</button></div>`;
+}
+function schedHtml(l){
+  const rows=loanRows(l),yr=new Date().getFullYear();
+  const pill={done:'<span class="pill ok">Received</span>',late:'<span class="pill soon">Overdue</span>',next:'<span class="pill">Next</span>',up:'<span class="meta">Upcoming</span>'};
+  const sc=rows.length?`<table class="t"><thead><tr><th>Due</th><th class="r">Amount</th><th class="r">Status</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${fmtD(r.date)}${r.date.getFullYear()!==yr?' '+r.date.getFullYear():''}</td><td class="r">${gbp.format(r.amt)}</td><td class="r">${pill[r.st]}</td></tr>`).join('')}</tbody></table>`:'<div class="note" style="margin:0">No repayment plan set. Record payments as they come in.</div>';
+  const pay=l.paid.length?`<div class="meta" style="margin:12px 0 4px">Payments received</div><table class="t"><tbody>${l.paid.slice().sort((a,b)=>a.date<b.date?1:-1).map(p=>`<tr><td>${fmtY(pd(p.date))}</td><td class="r">${gbp.format(p.amount)}</td><td class="r"><button class="x" data-lunpay="${l.id}|${p.id}" aria-label="Remove payment">×</button></td></tr>`).join('')}</tbody></table>`:'';
+  return `<div style="margin-top:12px"><div class="meta" style="margin-bottom:4px">Repayment schedule</div>${sc}${pay}</div>`;
+}
+function loanHtml(l){
+  const left=loanLeft(l),pct=Math.min(100,Math.round(loanPaid(l)/l.amount*100)),o=LOPEN&&LOPEN.id===l.id?LOPEN.m:'';
+  return `<div class="loan"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><div class="nm">${esc(l.who)}</div><div class="meta">${l.note?esc(l.note)+' · ':''}Lent ${fmtY(pd(l.date))}</div></div><div class="r"><div class="a">${gbp.format(left)}</div><div class="meta">of ${gbp.format(l.amount)}</div></div></div>
+  <div class="bar" style="margin:8px 0"><i style="width:${pct}%"></i></div>
+  <div class="meta">${nextLine(l)}</div>
+  <div class="rowbtns" style="margin-top:10px">${left>0?`<button class="btn" data-lpay="${l.id}">Record payment</button>`:''}<button class="btn ghost" data-lsch="${l.id}">${o==='sch'?'Hide schedule':'Schedule'}</button><button class="x" data-ldel="${l.id}" aria-label="Remove ${esc(l.who)}">×</button></div>
+  ${o==='pay'?payForm(l):''}${o==='sch'?schedHtml(l):''}</div>`;
+}
+function owedHome(){
+  const act=S.loans.filter(l=>loanLeft(l)>0);if(!act.length)return '';
+  const tot=r2(act.reduce((t,l)=>t+loanLeft(l),0));let od=0,nx=null;
+  act.forEach(l=>{const rs=loanRows(l);if(rs.some(r=>r.st==='late'))od++;const n=rs.find(r=>r.st==='next');if(n&&(!nx||n.date<nx.date))nx={...n,who:l.who}});
+  return `<div class="panel"><h2>Owed to you</h2><div class="big2">${gbp.format(tot)}</div><div class="sub">${od?od+' overdue. ':''}${nx?`Next: ${gbp.format(nx.amt)} from ${esc(nx.who)} on ${fmtD(nx.date)}.`:'No payment dates set.'}</div><button class="btn ghost" style="margin-top:12px;width:100%" data-go="owed">See who owes you</button></div>`;
+}
+function loanPreview(){
+  const d={amount:parseFloat($('lamt').value),pay:parseFloat($('lpay').value),freq:$('lfreq').value,first:$('lfirst').value},el=$('lprev');
+  $('lplan').classList.toggle('hidden',d.freq==='none');
+  const sc=d.freq==='none'?[]:schedule(d);
+  el.textContent=sc.length?`That is ${sc.length} payment${sc.length>1?'s':''}, with the last one on ${fmtY(sc[sc.length-1].date)}.`:'';
+}
+function renderOwed(){
+  const act=S.loans.filter(l=>loanLeft(l)>0),tot=r2(act.reduce((t,l)=>t+loanLeft(l),0));
+  let od=0;act.forEach(l=>{if(loanRows(l).some(r=>r.st==='late'))od++});
+  $('owedSum').innerHTML=`<h2>Owed to you</h2><div class="big2">${gbp.format(tot)}</div><div class="sub">${act.length?`still to come back from ${act.length} ${act.length===1?'loan':'loans'}`:'Nothing is owed to you right now.'}${od?`. ${od} overdue.`:''}</div>`;
+  const items=S.loans.slice().sort((a,b)=>((loanLeft(b)>0)-(loanLeft(a)>0))||(a.date<b.date?1:-1));
+  $('owedList').innerHTML='<h2>Loans</h2>'+(items.length?items.map(loanHtml).join(''):'<div class="empty">No loans yet. Add one below to track who owes you and when it is due back.</div>');
+  if(!$('ldate').value)$('ldate').value=iso(new Date());
+  if(!$('lfirst').value)$('lfirst').value=iso(dayDate(shift(NOW,1),new Date().getDate()));
+  loanPreview();
+}
+
+/* ---------- UK take-home pay calculator (2026/27) ---------- */
+const TAX={year:'2026/27',pa:12570,taper:100000,niPT:12570,niUEL:50270,
+  /* band limits are measured in taxable income, after the Personal Allowance */
+  ruk:[[37700,.20],[125140,.40],[Infinity,.45]],
+  scot:[[3967,.19],[16956,.20],[31092,.21],[62430,.42],[112570,.45],[Infinity,.48]],
+  loan:{p1:26900,p2:29385,p4:33795,p5:25000},pg:21000};
+function ukPay(c){
+  const gross=Math.max(0,parseFloat(c.salary)||0),pct=Math.min(100,Math.max(0,parseFloat(c.pension)||0));
+  const pension=gross*pct/100,taxPay=gross-pension,niPay=c.sacrifice?gross-pension:gross;
+  const pa=Math.max(0,TAX.pa-Math.max(0,(taxPay-TAX.taper)/2)),taxable=Math.max(0,taxPay-pa);
+  let tax=0,lo=0;for(const [hi,r] of (c.region==='scot'?TAX.scot:TAX.ruk)){if(taxable>lo)tax+=(Math.min(taxable,hi)-lo)*r;lo=hi}
+  let ni=0;if(niPay>TAX.niPT)ni+=(Math.min(niPay,TAX.niUEL)-TAX.niPT)*.08;if(niPay>TAX.niUEL)ni+=(niPay-TAX.niUEL)*.02;
+  let sl=0;const th=TAX.loan[c.plan];if(th&&niPay>th)sl+=(niPay-th)*.09;if(c.pg&&niPay>TAX.pg)sl+=(niPay-TAX.pg)*.06;
+  return{gross,pension,tax,ni,sl,net:gross-pension-tax-ni-sl};
+}
+let IM='monthly';
+function renderCalc(){
+  $('imMonthly').classList.toggle('hidden',IM!=='monthly');$('imYearly').classList.toggle('hidden',IM!=='yearly');
+  document.querySelectorAll('[data-im]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.im===IM));
+  const c=S.calc;
+  const set=(id,v,chk)=>{const el=$(id);if(!el||document.activeElement===el)return;if(chk)el.checked=!!v;else el.value=v};
+  set('calcSal',c.salary||'');set('calcReg',c.region||'ruk');set('calcPen',c.pension||'');set('calcSac',c.sacrifice,1);set('calcPlan',c.plan||'');set('calcPG',c.pg,1);
+  const r=ukPay(c);
+  if(!r.gross){$('calcOut').innerHTML='<div class="empty">Enter your yearly pay to see your take-home pay.</div>';return}
+  const y=x=>gbp.format(x),m=x=>gbp.format(x/12);
+  const row=(n,v)=>`<tr><td>${n}</td><td class="r">−${y(v)}</td><td class="r">−${m(v)}</td></tr>`;
+  const kept=Math.round(r.net/r.gross*100);
+  $('calcOut').innerHTML=`<div class="big2">${m(r.net)}</div><div class="sub">take-home pay a month. You keep ${kept}% of your pay. This is the amount that will be added.</div>
+  <details style="margin-top:8px"><summary>See the breakdown</summary><table class="t" style="margin-top:6px"><thead><tr><th></th><th class="r">Yearly</th><th class="r">Monthly</th></tr></thead><tbody>
+  <tr><td>Pay before tax</td><td class="r">${y(r.gross)}</td><td class="r">${m(r.gross)}</td></tr>
+  ${r.pension?row('Pension',r.pension):''}${row('Income tax',r.tax)}${row('National Insurance',r.ni)}${r.sl?row('Student loan',r.sl):''}
+  </tbody><tfoot><tr><td>Take-home</td><td class="r">${y(r.net)}</td><td class="r">${m(r.net)}</td></tr></tfoot></table></details>
+  <div class="note">This is an estimate for an employee on a standard tax code for the ${TAX.year} tax year. It leaves out bonuses, benefits, other income, a different tax code, Marriage Allowance and self-employment, so check it against your payslip. It is information, not tax advice.</div>`;
+}
+const calcIn=()=>{const c=S.calc;c.salary=$('calcSal').value;c.region=$('calcReg').value;c.pension=$('calcPen').value;c.sacrifice=$('calcSac').checked;c.plan=$('calcPlan').value;c.pg=$('calcPG').checked;const r=ukPay(c);save();renderAll()};
+['calcSal','calcReg','calcPen','calcSac','calcPlan','calcPG'].forEach(i=>{$(i).addEventListener('input',calcIn);$(i).addEventListener('change',calcIn)});
 show('home');
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
@@ -562,10 +802,10 @@ let DEF=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEF=e;$('install').classList.remove('hidden')});
 window.addEventListener('appinstalled',()=>{$('install').classList.add('hidden');DEF=null});
 $('install').onclick=async()=>{if(!DEF)return;DEF.prompt();try{await DEF.userChoice}catch(e){}DEF=null;$('install').classList.add('hidden')};
-$('bkdl').onclick=()=>{const b=new Blob([JSON.stringify(S)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='bill-tracker-backup-'+iso(new Date())+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000)};
+$('bkdl').onclick=()=>{const b=new Blob([JSON.stringify(S)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='bill-tracker-backup-'+iso(new Date())+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);toast('✓ Backup file downloaded. Keep it somewhere safe',()=>{},'OK')};
 $('bkfile').onchange=async()=>{
   const f=$('bkfile').files[0];if(!f)return;
-  try{const p=JSON.parse(await f.text());if(!p||!Array.isArray(p.bills))throw 0;const snap=JSON.stringify(S);S=Object.assign({pick:null,me:null},p);norm();save();renderAll();toast('Backup restored',()=>{S=JSON.parse(snap);norm();save();renderAll()})}
+  try{const p=JSON.parse(await f.text());if(!p||!Array.isArray(p.bills))throw 0;const snap=JSON.stringify(S);S=Object.assign({pick:null,me:null},p);norm();save();renderAll();toast('✓ Backup restored',()=>{S=JSON.parse(snap);norm();save();renderAll()})}
   catch(e){toast('That file is not a valid backup',()=>{},'OK')}
   $('bkfile').value='';
 };
