@@ -1,7 +1,7 @@
 /* Bill Tracker service worker: keeps the app working offline.
    Change VERSION whenever you publish a new index.html so phones pick it up. */
-const VERSION = 'v1';
-const CACHE = 'bill-tracker-' + VERSION;
+const VERSION = 'v2';
+const CACHE = 'penny-pilot-' + VERSION;
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'maskable-192.png', 'maskable-512.png'];
 
 self.addEventListener('install', e => {
@@ -11,7 +11,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k.startsWith('bill-tracker-') && k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k.startsWith('penny-pilot-') && k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });

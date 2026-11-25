@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Bill Tracker",
-  "short_name": "Bills",
-  "description": "Track bills, income, savings and due dates. Works offline.",
+  "name": "Penny Pilot",
+  "short_name": "Penny Pilot",
+  "description": "Steer your money, one bill at a time. Track bills, income, savings and due dates, offline.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

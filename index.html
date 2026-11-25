@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2f5bff">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Bill Tracker</title>
+<title>Penny Pilot</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -90,6 +90,11 @@ input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:
 .step{display:flex;gap:12px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;padding:12px;border-radius:12px;cursor:pointer}
 .step b{flex:none;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
 .step span{display:grid;font-weight:600}.step small{font-weight:400;color:var(--muted);font-size:13px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:46px;height:46px;border-radius:13px;background:#7e22ce;display:grid;place-items:center;flex:none}
+.brand h1{font-size:22px;font-weight:800;color:var(--ink);margin:0;line-height:1.1;letter-spacing:-.01em}
+.slogan{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.25}
+.top{align-items:center}
 .seg{display:flex;gap:8px}
 .filebtn{display:grid;place-items:center;font-size:16px;gap:0;color:var(--accent)}
 :root{--c-home:#2f5bff;--c-bills:#c2410c;--c-inc:#15803d;--c-hist:#7e22ce}
@@ -124,7 +129,7 @@ body[data-s="hist"]{--accent:var(--c-hist)}
 </head>
 <body data-s="home">
 <main>
-<div class="top"><h1>Bill tracker</h1><button id="install" class="ebtn hidden">Install app</button></div>
+<div class="top"><div class="brand"><span class="logo"><svg viewBox="16 12 92 92" width="38" height="38" aria-hidden="true"><circle cx="50" cy="70" r="32" fill="#f5b82e"/><circle cx="50" cy="70" r="24" fill="none" stroke="#b7791f" stroke-width="3"/><text x="50" y="81" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="30" fill="#5b1a8f">£</text><polygon points="104,16 60,38 76,47" fill="#fff"/><polygon points="104,16 76,47 84,70" fill="#e4d0f7"/></svg></span><div><h1>Penny Pilot</h1><div class="slogan">Steer your money, one bill at a time.</div></div></div><button id="install" class="ebtn hidden">Install app</button></div>
 <div class="navwrap navtop" id="navTop"></div>
 <div id="mwrap"><div class="mnav" id="mnav"><button id="pm" aria-label="Previous month">‹</button><b id="mlabel"></b><button id="nm" aria-label="Next month">›</button></div>
 <div class="tonow hidden" id="tonowW"><span id="vnote"></span><button class="chip" id="tonow">Back to this month</button></div></div>
@@ -324,7 +329,7 @@ const dueRow=d=>`<tr><td><div class="nm">${esc(d.name)}</div><div class="meta">$
 function renderHome(){
   const c=calc(VIEW),due=dueList(),p=potInfo();
   if(!S.bills.length&&!S.items.length&&!c.inc&&!S.saves.length){
-    $('homeBody').innerHTML=`<div class="panel"><h2>Welcome. Set up in three steps</h2><div class="steps">
+    $('homeBody').innerHTML=`<div class="panel"><h2>Welcome to Penny Pilot</h2><div class="note" style="margin:0 0 12px">Steer your money, one bill at a time. Set up in three steps:</div><div class="steps">
       <button class="step" data-go="income"><b>1</b><span>Add your monthly income<small>Takes a few seconds</small></span></button>
       <button class="step" data-go="bills"><b>2</b><span>Add your bills<small>Enter each one once and it repeats every month</small></span></button>
       <button class="step" data-go="income" data-sv="1"><b>3</b><span>Add your savings<small>Optional, and you can set a goal</small></span></button></div></div>`;
